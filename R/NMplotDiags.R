@@ -1,23 +1,42 @@
 #### diagonal comparisons. Log is missing. Generalize splitting
 #### (compound) and facetting (devpart+pop), add log and put into
 #### function.
-NMplotDiags <- function(data){
+
+
+NMplotDiags <- function(data,by.split=NULL,facet=NULL){
     plots.diag <- list()
-    ## pred vs obs and ipred vs obs split by devpart and dose
-    plots.diag$pred.dv.parent <- ggplot(data[EVID==0&PARENT==1],aes(DV,PRED,colour=dose))+
-        geom_abline(slope=1,intercept = 0)+
-        geom_point()+
-        facet_wrap(~devpart+pop,scales="free")+
-        labs(x="Observations",y="Population predictions",title=paste(details$model, "VX-548"))
+    model <- paste(unique(data[,model],collapse="+"))
 
-    
-    plots.diag$ipred.dv.parent <- plots.diag$pred.dv.parent + aes(DV,IPRED) +
-        labs(x="Observations",y="Individual predictions",title=paste(details$model, "VX-548"))
+    data <- data[EVID==0]
+    if(is.null(by.split)){
+        data.split <- list(" "=data)
+    } else {
+        data.split <- split(data,by=by.split)
+    }
 
-    plots.diag$pred.dv.metab <- plots.diag$pred.dv.parent %+% data[EVID==0&PARENT==0]+
-        labs(title=paste(details$model, "M6-548"))
-    plots.diag$ipred.dv.metab <- plots.diag$ipred.dv.parent %+% data[EVID==0&PARENT==0]+
-        labs(title=paste(details$model, "M6-548"))
-    plots$diags_pred_dv <- plots.diag
+    names.data.split <- names(data.split)
+    plots.diag <- lapply(names.data.split,function(name.data){
+        dt1 <- data.split[[name.data]]
+        res <- list()
+        res$pred.dv <- ggplot(dt1,aes(DV,PRED,colour=dose))+
+            geom_abline(slope=1,intercept = 0)+
+            geom_point()+
+            labs(x="Observations",y="Population predictions",title=paste(model, name.data))
+        if(!is.null(facet)){
+            res$pred.dv <- res$pred.dv +
+                facet_wrap(as.formula(paste0("~",paste(facet,collapse="+"))),scales="free")
+        }
+        
+        res$ipred.dv <- res$pred.dv + aes(DV,IPRED) +
+            labs(x="Observations",y="Individual predictions",title=paste(model, name.data))
+        res
+    })
+    if(is.null(by.split)) {
+        plots.diag <- plots.diag[[1]]
+    } else {
+        names(plots.diag) <- names.data.split
+        plots.diag <- do.call(c,plots.diag)
+    }
     
+    plots.diag    
 }

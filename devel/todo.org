@@ -1,0 +1,7 @@
+* NMgof todo
+** NMplotDiags
+*** TODO log-log versions
+*** TODO diagonal dashed blue
+*** TODO trendline full black
+**** TODO Look up how to do the trendline
+*** TODO lines on top of points
