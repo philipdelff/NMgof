@@ -53,22 +53,24 @@ NMgof <- function(dir.models,fun.gof,dir.diag,fun.find.models,update.only=TRUE,s
         plots.run <- try(fun.gof(run=path.lst,dir.diag=dir.diag,...))
 
 ### save plots
-        names.plots <- names(plots.run$plots)
-        dir.diag.nmod <- file.path(dir.diag,plots.run$details$model)
-        if(!dir.exists(dir.diag.nmod)) dir.create(dir.diag.nmod)
-        
-        silent <- lapply(names.plots,function(x)
-            ggwrite(plots.run$plots[[x]],file=file.path(dir.diag.nmod,paste0(x,"_",plots.run$details$model,".pdf")),onefile=TRUE,canvas="wide-screen",script=script)
-            )
+        if(!"try-error"%in%class(plots.run)){
+            names.plots <- names(plots.run$plots)
+            dir.diag.nmod <- file.path(dir.diag,plots.run$details$model)
+            if(!dir.exists(dir.diag.nmod)) dir.create(dir.diag.nmod)
+            
+            silent <- lapply(names.plots,function(x)
+                ggwrite(plots.run$plots[[x]],file=file.path(dir.diag.nmod,paste0(x,"_",plots.run$details$model,".pdf")),onefile=TRUE,canvas="wide-screen",script=script)
+                )
 ### save plots done
 
-        ## this should be part of gofRun
-        info.save <- list(model=model
-                         ,time=Sys.time()
-                          )
-        
-        saveRDS(info.save,file=dt.mods[nmod,path.info])
-        
+
+            info.save <- list(model=model
+                             ,time=Sys.time()
+                              )
+            
+            saveRDS(info.save,file=dt.mods[nmod,path.info])
+            
+        }
     }
 
     return(invisible(NULL))

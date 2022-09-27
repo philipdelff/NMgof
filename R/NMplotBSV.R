@@ -27,7 +27,7 @@
 ##' @family Plotting
 ##' @export
 
-NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,covs.char,fun.file=identity,save=FALSE,show=TRUE,script=NULL,return.data=FALSE,title=NULL,debug=F){
+NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,covs.char,fun.file=identity,save=FALSE,show=TRUE,script=NULL,return.data=FALSE,title=NULL,structure="flat",debug=F){
 
     if(debug) {browser()}
     
@@ -110,7 +110,7 @@ NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,
         ## compare.names(etas,pkpars)
         ##   etas.l <- mergeCheck(etas.l,pkpars,by=c(col.id,covs.num,covs.char),allow.cartesian=TRUE)
         
-            etas.l.actual <- subset(etas.l,value!=0)
+        etas.l.actual <- subset(etas.l,value!=0)
 
 
 #### this is the histograms of non-zeros and with gaussian approximations
@@ -126,7 +126,8 @@ NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,
             ),
             by="param"]
         
-        gh2 <- ggplot(data = dat,aes(x = value)) + 
+        gh2 <- ggplot(data = dat,aes(x = value)) +
+            geom_vline(xintercept=0,colour="grey",linetype="dashed")+
             geom_histogram(aes(y = ..density..)) + 
             geom_line(data = normaldens, aes(x = predicted, y = density), colour = "red",size=1)+
             facet_wrap(~param,scales="free")+
@@ -137,13 +138,15 @@ NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,
         all.output[["hists.etas"]]  <- gh2
 
         plot.qq <- ggplot(dat,aes(sample=value))+
+            geom_hline(yintercept=0,colour="grey",linetype="dashed")+
+            geom_vline(xintercept=0,colour="grey",linetype="dashed")+
             geom_qq_line(colour=2,size=1.5)+
             geom_qq()+
             ## the theroretical identity line
             geom_abline(slope=1,intercept=0,linetype=2)+
             facet_wrap(~param)+
-            labs(x="Theoretical",y="Observed",title=title)
-        ggwrite(plot.qq,file=fun.file("qq_etas.png"),script=script,save=save,show=show)
+            labs(x="Theoretical",y="Observed",title=title)+
+            ggwrite(plot.qq,file=fun.file("qq_etas.png"),script=script,save=save,show=show)
         all.output[["qq.bsv"]]  <- plot.qq
         
         ## IIV random effects vs covariates
@@ -175,20 +178,21 @@ NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,
                                                        labs(title=title,x=dt[,unique(cov)],y="Eta")
                                       })
                 ggwrite(p.iiv.covsn,file=fun.file("iiv_covs_n.png"),script=script,save=save,show=show)
-                all.output[["iiv.covsn"]] <- p.iiv.covsn
+                if(structure=="flat"){
+                    all.output <- c(all.output,
+                                    setNames(p.iiv.covsn,paste0("iiv_covsn_",names(p.iiv.covsn)))
+                                    )
+                } else {
+                    all.output[["iiv.covsn"]] <- p.iiv.covsn
+                }
             }
         }
         if(!is.null(covs.char)){
-            
             etas.l2.c <- etas.l[,c(col.id,"param","value",covs.char),with=F]
-
             DT <- data.table(etas.l2.c)
-
             DT2 <- melt(DT,measure.vars=covs.char,id.vars=c("ID","param","value"),value.name="val.cov",value.factor=T)
-            
-            ## p.iiv.covsc.dt <- ggplot(DT2,aes(val.cov,value))+geom_boxplot()+facet_wrap(~param)
             sets <- split(DT2,by="variable")
-            p.iiv.covsc.dt <- lapply(sets,function(dat){
+            p.iiv.covsc <- lapply(sets,function(dat){
                 ggplot(dat,aes(val.cov,value))+
                     geom_hline(yintercept=0,linetype=2) +
                     geom_boxplot(outlier.shape=NA,colour="blue")+
@@ -198,12 +202,19 @@ NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,
                     ## rotate_x_text(45)+
                     labs(title=title,x=dat[,unique(variable)],y="Eta")
             })
-            ggwrite(p.iiv.covsc.dt,file=fun.file("iiv_covs_c.png"),useNames=TRUE,script=script,save=save,show=show)
-            all.output[["iiv.covc"]] <- p.iiv.covsc.dt
+            ggwrite(p.iiv.covsc,file=fun.file("iiv_covs_c.png"),useNames=TRUE,script=script,save=save,show=show)
+            if(structure=="flat"){
+                all.output <- c(all.output,
+                                setNames(p.iiv.covsc,paste0("iiv_covsc_",names(p.iiv.covsc)))
+                                )
+            } else {
+                all.output[["iiv.covsc"]] <- p.iiv.covsc
+            }
         }
     } else {
         message("No BSV random effects found in parameter table.")
     }
+    ### I think this check can be done before all the potential plotting and then just exit earlier
     ## if there are no plots to return, we return NULL (instead of a list of length 0).
     if(length(all.output)==0&&!return.data){return(NULL)}
     if(return.data){
