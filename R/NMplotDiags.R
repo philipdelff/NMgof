@@ -18,18 +18,18 @@ NMplotDiags <- function(data,by.split=NULL,facet=NULL){
     plots.diag <- lapply(names.data.split,function(name.data){
         dt1 <- data.split[[name.data]]
         res <- list()
-        res$pred.dv <- ggplot(dt1,aes(DV,PRED,colour=dose))+
+        res$pred.dv <- ggplot(dt1,aes(PRED,DV,colour=dose))+
             geom_point()+
             geom_abline(slope=1,intercept = 0,colour="blue",linetype="dashed")+
             geom_smooth(method="loess",se=FALSE,colour="red")+
-            labs(x="Observations",y="Population predictions",title=paste(name.data))
+            labs(x="Population predictions",y="Observations",title=paste(name.data))
         if(!is.null(facet)){
             res$pred.dv <- res$pred.dv +
                 facet_wrap(as.formula(paste0("~",paste(facet,collapse="+"))),scales="free")
         }
         
-        res$ipred.dv <- res$pred.dv + aes(DV,IPRED) +
-            labs(x="Observations",y="Individual predictions",title=paste(name.data))
+        res$ipred.dv <- res$pred.dv + aes(IPRED,DV) +
+            labs(x="Individual predictions",y="Observations",title=paste(name.data))
         res
     })
     if(is.null(by.split)) {

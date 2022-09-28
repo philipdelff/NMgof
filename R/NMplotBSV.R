@@ -100,8 +100,9 @@ NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,
 
         
         iiv.pairs <- ggpairs(etas,columns=names.etas.var,lower=list(continuous=points.and.smooth),title=title)
-        
-        ggwrite(iiv.pairs,file=fun.file("iiv_pairs.png"),script=script,save=save,show=show)
+        if(save||show){
+            ggwrite(iiv.pairs,file=fun.file("iiv_pairs.png"),script=script,save=save,show=show)
+        }
         all.output[["iiv.pairs"]]  <- iiv.pairs
         
         ## etas.l <- gather(etas,param,value,-1)
@@ -133,10 +134,12 @@ NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,
             facet_wrap(~param,scales="free")+
             labs(title=title)
 
-        ## gsave(gh2,file=file.runplot(name.run,"hists_etas_actual_wgaussian.png"),save=write.output,stamp=stamp)
-        ggwrite(gh2,file=fun.file("hists_etas_actual_wgaussian.png"),script=script,save=save,show=show)
+        if(save||show){
+            ggwrite(gh2,file=fun.file("hists_etas_actual_wgaussian.png"),script=script,save=save,show=show)
+        }
         all.output[["hists.etas"]]  <- gh2
-
+        
+        
         plot.qq <- ggplot(dat,aes(sample=value))+
             geom_hline(yintercept=0,colour="grey",linetype="dashed")+
             geom_vline(xintercept=0,colour="grey",linetype="dashed")+
@@ -145,8 +148,8 @@ NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,
             ## the theroretical identity line
             geom_abline(slope=1,intercept=0,linetype=2)+
             facet_wrap(~param)+
-            labs(x="Theoretical",y="Observed",title=title)+
-            ggwrite(plot.qq,file=fun.file("qq_etas.png"),script=script,save=save,show=show)
+            labs(x="Theoretical",y="Observed",title=title)
+        ggwrite(plot.qq,file=fun.file("qq_etas.png"),script=script,save=save,show=show)
         all.output[["qq.bsv"]]  <- plot.qq
         
         ## IIV random effects vs covariates
@@ -214,7 +217,7 @@ NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,
     } else {
         message("No BSV random effects found in parameter table.")
     }
-    ### I think this check can be done before all the potential plotting and then just exit earlier
+### I think this check can be done before all the potential plotting and then just exit earlier
     ## if there are no plots to return, we return NULL (instead of a list of length 0).
     if(length(all.output)==0&&!return.data){return(NULL)}
     if(return.data){
