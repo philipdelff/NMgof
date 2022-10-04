@@ -1,6 +1,7 @@
 
 ##' @import data.table
 ##' @importFrom NMcalc means
+##' @export
 
 ## This should be generalized with arguments for PRED, IPRED and
 ## DV.

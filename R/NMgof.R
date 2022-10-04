@@ -1,22 +1,19 @@
 ##' @import data.table
+##' @export
 
 ### run gof plots on all updated models 
-NMgof <- function(dir.models,fun.gof,dir.diag,fun.find.models,update.only=TRUE,script=NULL,...){
+NMgof <- function(dir.models,fun.gof,dir.diag,fun.find.models,fun.repair.data=NULL,update.only=TRUE,script=NULL,...){
     
     if(missing(fun.find.models)){
         fun.find.models <- function(dir) list.files(dir,pattern=".lst$",full.names=T)
     }
     
-    ## dt.mods <- data.table(
-    ##     path.lst= list.files("models/Final_Auto",pattern=".lst$",full.names=T)
-    ## )
-    ## dt.mods <- dt.mods[!grepl("^sim",basename(path.lst))]
-
     dt.mods <- data.table(
         path.lst = fun.find.models(dir.models)
     )
 
-    fun.file.rds <- function(dir.diag,run) file.path(paste0("outputs/PK_diagnostics/",run,"/NMgof_",run,"_gof_runtime.rds"))
+    ## fun.file.rds <- function(dir.diag,run) file.path(paste0("outputs/PK_diagnostics/",run,"/NMgof_",run,"_gof_runtime.rds"))
+    fun.file.rds <- function(dir.diag,run) file.path(dir.diag,run,paste0("NMgof_",run,"_gof_runtime.rds"))
     
     dt.mods[,mtime:=file.info(path.lst)$mtime]
     dt.mods[,model:=sub("run","",basename(path.lst))]
@@ -38,28 +35,47 @@ NMgof <- function(dir.models,fun.gof,dir.diag,fun.find.models,update.only=TRUE,s
 
     if(nrow(dt.mods)==0) {
         message("No models to process. Exiting.")
-        return(invisible(NULL))}
+        return(invisible(NULL))
+    }
     
     setorder(dt.mods,-mtime)
+    print(dt.mods)
+    
 
     ## plots <- lapply()
-    dir.plots <- "outputs/PK_diagnostics"
     ##    for(model in dt.mods$model){
-    for(nmod in 1:dt.mods[,.N]){
+
+    fun.run <- function(nmod){
         model <- dt.mods[nmod,model]
+        cat(sprintf("\n----------- model %s ---------------\n",model))
+        
         path.lst <- dt.mods[nmod,path.lst]
 
-        ## by="devpart",arm="dose",analyte="compound",names.eta=names.eta,dir.diag=file.res("PK_diagnostics")
-        plots.run <- try(fun.gof(run=path.lst,dir.diag=dir.diag,...))
+        ## dt.run <- dtall[model==run]
+
+### read and prepare data start
+        this.file.data <- fnExtension(fnAppend(path.lst,"input"),".rds")
+        if(!file.exists(this.file.data)) this.file.data <- "extract"
+        
+        ## dt.run <- NMscanData(run,file.data=function(x)fnExtension(fnAppend(x,"input"),".rds"))
+        dt.run <- NMscanData(path.lst,file.data=this.file.data)
+        details <- NMinfo(dt.run,"details")
+
+        if(!is.null(fun.repair.data)) dt.run <- fun.repair.data(dt.run)
+        
+### read and prepare data end
+        
+        plots.run <- try(fun.gof(dt=dt.run,dir.diag=dir.diag,...))
 
 ### save plots
         if(!"try-error"%in%class(plots.run)){
-            names.plots <- names(plots.run$plots)
-            dir.diag.nmod <- file.path(dir.diag,plots.run$details$model)
+            names.plots <- names(plots.run)
+            
+            dir.diag.nmod <- file.path(dir.diag,model)
             if(!dir.exists(dir.diag.nmod)) dir.create(dir.diag.nmod)
             
             silent <- lapply(names.plots,function(x)
-                ggwrite(plots.run$plots[[x]],file=file.path(dir.diag.nmod,paste0(x,"_",plots.run$details$model,".pdf")),onefile=TRUE,canvas="wide-screen",script=script)
+                ggwrite(plots.run[[x]],file=file.path(dir.diag.nmod,paste0(x,"_",model,".pdf")),onefile=TRUE,canvas="wide-screen",script=script,save=TRUE,show=F)
                 )
 ### save plots done
 
@@ -71,6 +87,9 @@ NMgof <- function(dir.models,fun.gof,dir.diag,fun.find.models,update.only=TRUE,s
             saveRDS(info.save,file=dt.mods[nmod,path.info])
             
         }
+    }
+    for(nmod in 1:dt.mods[,.N]){
+        tmp <- try(fun.run(nmod))
     }
 
     return(invisible(NULL))

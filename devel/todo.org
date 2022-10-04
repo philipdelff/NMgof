@@ -9,4 +9,34 @@
 *** DONE trendline full red
 **** DONE smooth with loess
 *** DONE lines on top of points
+** NMplotIndProfs
+
+#### todo
+
+## 2019-04-09 philipdelff: doses should be added by x before plotting
+
+## 2019-04-02 philipdelff: scale ranges. Fix within grp, sheet, or
+## totally free.
+
+## 2019-04-02 philipdelff: x and y scales should be controlled individually.
+
+## 2019-04-02 philipdelff: Include possibility of limiting scale by
+## pk, dose, and/or predictions
+
+## This function performs two different operations. It plots profiles,
+## and it splits the profiles by faceting and by splitting into a list
+## of plots. At least the last part of splitting into a list should be
+## split into a separate function.
+
+## only plot available variables. Warn users what not found if verbose?
+
+## there must be something easier than the format data stuff 
+
+## structure the evid selection
+
+## optionally colour all by id
+
+## In yrange LLOQ should be taken into account if provided
+
+### end todo
 

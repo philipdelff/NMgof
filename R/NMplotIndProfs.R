@@ -74,45 +74,6 @@
 ##' @export
 
 
-### change log
-## 2019-04-01 philipdelff: Added support for plotting of doses.
-
-## 2019-03-28 philipdelff: the two for loops to control faceting is
-## horribly inflexible. Do the plot, then facet. First: for splitting
-## into pages, introduce a variable (column) that groups into the
-## splitting needed.
-
-### end change log
-
-#### todo
-
-## 2019-04-09 philipdelff: doses should be added by x before plotting
-
-## 2019-04-02 philipdelff: scale ranges. Fix within grp, sheet, or
-## totally free.
-
-## 2019-04-02 philipdelff: x and y scales should be controlled individually.
-
-## 2019-04-02 philipdelff: Include possibility of limiting scale by
-## pk, dose, and/or predictions
-
-## This function performs two different operations. It plots profiles,
-## and it splits the profiles by faceting and by splitting into a list
-## of plots. At least the last part of splitting into a list should be
-## split into a separate function.
-
-## only plot available variables. Warn users what not found if verbose?
-
-## there must be something easier than the format data stuff 
-
-## structure the evid selection
-
-## optionally colour all by id
-
-## In yrange LLOQ should be taken into account if provided
-
-### end todo
-
 
 
 NMplotIndProfs <- function(data, run, x="TIME", dv="DV", pred="PRED", ipred=c("IPRED","IPRE"), grp, amt , id = "ID", xlab = NULL, ylab = NULL, ylab2 = NULL, scales = "fixed", logy = F, NPerSheet=12,LLOQ=NULL, use.evid2, facet=id, ncol.facet=3, par.prof=NULL, x.inc, grp.label = grp, labels="facet", nullIfEmpty=FALSE, quiet = FALSE, debug = FALSE, debug.sheet){
@@ -143,6 +104,9 @@ NMplotIndProfs <- function(data, run, x="TIME", dv="DV", pred="PRED", ipred=c("I
 
     data <- copy(as.data.table(data))
 
+    ### This could be done somewhat automatically. However, x may not be TIME.
+    ## NMexpandDoses()
+    
     if(nrow(data)==0) {
 
         if(nullIfEmpty) {

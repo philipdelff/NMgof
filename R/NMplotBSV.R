@@ -100,9 +100,9 @@ NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,
 
         
         iiv.pairs <- ggpairs(etas,columns=names.etas.var,lower=list(continuous=points.and.smooth),title=title)
-        if(save||show){
-            ggwrite(iiv.pairs,file=fun.file("iiv_pairs.png"),script=script,save=save,show=show)
-        }
+        ## if(save||show){
+        ##     ggwrite(iiv.pairs,file=fun.file("iiv_pairs.png"),script=script,save=save,show=show)
+        ## }
         all.output[["iiv.pairs"]]  <- iiv.pairs
         
         ## etas.l <- gather(etas,param,value,-1)
@@ -134,9 +134,9 @@ NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,
             facet_wrap(~param,scales="free")+
             labs(title=title)
 
-        if(save||show){
-            ggwrite(gh2,file=fun.file("hists_etas_actual_wgaussian.png"),script=script,save=save,show=show)
-        }
+        ## if(save||show){
+        ##     ggwrite(gh2,file=fun.file("hists_etas_actual_wgaussian.png"),script=script,save=save,show=show)
+        ## }
         all.output[["hists.etas"]]  <- gh2
         
         
@@ -149,7 +149,7 @@ NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,
             geom_abline(slope=1,intercept=0,linetype=2)+
             facet_wrap(~param)+
             labs(x="Theoretical",y="Observed",title=title)
-        ggwrite(plot.qq,file=fun.file("qq_etas.png"),script=script,save=save,show=show)
+        ## ggwrite(plot.qq,file=fun.file("qq_etas.png"),script=script,save=save,show=show)
         all.output[["qq.bsv"]]  <- plot.qq
         
         ## IIV random effects vs covariates
@@ -180,7 +180,7 @@ NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,
                                                        facet_wrap(~param,scales="free")+
                                                        labs(title=title,x=dt[,unique(cov)],y="Eta")
                                       })
-                ggwrite(p.iiv.covsn,file=fun.file("iiv_covs_n.png"),script=script,save=save,show=show)
+                ## ggwrite(p.iiv.covsn,file=fun.file("iiv_covs_n.png"),script=script,save=save,show=show)
                 if(structure=="flat"){
                     all.output <- c(all.output,
                                     setNames(p.iiv.covsn,paste0("iiv_covsn_",names(p.iiv.covsn)))
@@ -205,7 +205,7 @@ NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,
                     ## rotate_x_text(45)+
                     labs(title=title,x=dat[,unique(variable)],y="Eta")
             })
-            ggwrite(p.iiv.covsc,file=fun.file("iiv_covs_c.png"),useNames=TRUE,script=script,save=save,show=show)
+##             ggwrite(p.iiv.covsc,file=fun.file("iiv_covs_c.png"),useNames=TRUE,script=script,save=save,show=show)
             if(structure=="flat"){
                 all.output <- c(all.output,
                                 setNames(p.iiv.covsc,paste0("iiv_covsc_",names(p.iiv.covsc)))

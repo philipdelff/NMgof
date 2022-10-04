@@ -18,6 +18,7 @@ NMplotBSV(
   script = NULL,
   return.data = FALSE,
   title = NULL,
+  structure = "flat",
   debug = F
 )
 }

@@ -1,9 +1,11 @@
+##' @export
+
 #### diagonal comparisons. Log is missing. Generalize splitting
 #### (compound) and facetting (devpart+pop), add log and put into
 #### function.
 
 
-NMplotDiags <- function(data,by.split=NULL,facet=NULL){
+NMplotDiags <- function(data,by.split=NULL,facet=NULL,colour=NULL){
     plots.diag <- list()
     model <- paste(unique(data[,model],collapse="+"))
 
@@ -18,7 +20,7 @@ NMplotDiags <- function(data,by.split=NULL,facet=NULL){
     plots.diag <- lapply(names.data.split,function(name.data){
         dt1 <- data.split[[name.data]]
         res <- list()
-        res$pred.dv <- ggplot(dt1,aes(PRED,DV,colour=dose))+
+        res$pred.dv <- ggplot(dt1,aes_string("PRED","DV",colour=colour))+
             geom_point()+
             geom_abline(slope=1,intercept = 0,colour="blue",linetype="dashed")+
             geom_smooth(method="loess",se=FALSE,colour="red")+
