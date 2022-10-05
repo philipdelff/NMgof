@@ -19,12 +19,21 @@ NMplotDiags <- function(data,by.split=NULL,facet=NULL,colour=NULL){
     names.data.split <- names(data.split)
     plots.diag <- lapply(names.data.split,function(name.data){
         dt1 <- data.split[[name.data]]
+
+        ## xymin <- min(dt1[,.(DV,PRED,IPRED)])
+        xymin <- 0
+        xymax <- 1.1*max(dt1[,.(DV,PRED,IPRED)])
+        
         res <- list()
         res$pred.dv <- ggplot(dt1,aes_string("PRED","DV",colour=colour))+
             geom_point()+
             geom_abline(slope=1,intercept = 0,colour="blue",linetype="dashed")+
-            geom_smooth(method="loess",se=FALSE,colour="red")+
-            labs(x="Population predictions",y="Observations",title=paste(name.data))
+            geom_smooth(method="loess",formula=y~x,se=FALSE,colour="red")+
+            labs(x="Population predictions",y="Observations",title=paste(name.data))+
+             coord_cartesian(xlim=c(xymin, xymax), 
+                             ylim=c(xymin, xymax))## +
+            ## coord_fixed(ratio = 1)
+        
         if(!is.null(facet)){
             res$pred.dv <- res$pred.dv +
                 facet_wrap(as.formula(paste0("~",paste(facet,collapse="+"))),scales="free")
