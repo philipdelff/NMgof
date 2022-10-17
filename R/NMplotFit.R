@@ -7,16 +7,16 @@
 ## DV.
 
 ## col.nomtime must be an argument
-NMplotFit <- function(dt,models=NULL,type.mean="geometric",by.split=NULL,col.grp=NULL,col.nomtime,ci=TRUE,colour="model",facets="CMT~DOSE",simplify=TRUE){
+NMplotFit <- function(dt,models=NULL,type.mean="geometric",by.split=NULL,col.grp=NULL,col.nomtime,ci=TRUE,colour="model",colour.dv=FALSE,facets="CMT~DOSE",simplify=TRUE){
     
-
+    
     dt <- dt[EVID==0]
     if(!is.null(models)){
         dt <- dt[model%in%models]
     }
     
     ##    by.all.1 <- cc(model,devpart,DOSE,dose,NOMTIME,PARENT,METAB,ABD)
-    by.all <- c(by.split,col.nomtime,"model",col.grp)
+    by.all <- unique(c(by.split,col.nomtime,"model",col.grp))
     
     dt <- rbind(transform(dt[model==dt[1,model]],model=NA,PRED=NA,IPRED=NA,type="obs"),
                 transform(dt,DV=NA,type="model"),
@@ -46,20 +46,27 @@ NMplotFit <- function(dt,models=NULL,type.mean="geometric",by.split=NULL,col.grp
         if(nrow(data.split[[x]])==0) return(NULL)
         p1 <- ggplot(data.split[[x]],aes_string(col.nomtime,"mDV"))+
             geom_point(aes(shape="Observations"))
+        if(colour.dv) p1 <- p1+aes_string(colour=colour)
         if(ci){
-            p1 <- p1 +
-                geom_errorbar(aes(ymin=mDVll,ymax=mDVul),colour="gray",data=function(y)y[type=="means"])
+            if(colour.dv){
+                p1 <- p1 +
+                    geom_errorbar(aes(ymin=mDVll,ymax=mDVul),data=function(y)y[type=="means"])
+            } else {
+                p1 <- p1 +
+                    geom_errorbar(aes(ymin=mDVll,ymax=mDVul),colour="gray",data=function(y)y[type=="means"])
+            }
         }
         
         p1 <- p1+
             ## geom_line(aes_string(y="mPRED",colour=colour),data=function(y)y[type=="model"])+
             ## geom_line(aes_string(y="mIPRED",colour=colour),linetype=2,data=function(y)y[type=="model"])+
-            geom_line(aes_string(y="value.pred",colour=colour,linetype="type.pred"),data=function(y)y[type=="means"])+
+            geom_line(aes_string(y="value.pred",colour=colour,linetype="type.pred"),data=function(y)y[type=="means"&!is.na(model)])+
             ## facet needs to be based on arguments analyte and by?
             ## facet_grid(CMT~DOSE,scales="free_y")+
-            facet_grid(as.formula(facets),scales="free_y") +
+            ## facet_grid(as.formula(facets),scales="free_y") +
             labs(title=x,colour="",linetype="",shape="",y="") + 
-            scale_colour_discrete(na.translate = F) 
+            scale_colour_discrete(na.translate = F)
+        p1
     })
     if(simplify && length(plots.preds.time)) {
         plots.preds.time <- plots.preds.time[[1]]

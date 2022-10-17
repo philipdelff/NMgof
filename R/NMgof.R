@@ -32,6 +32,8 @@ NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NUL
     if(is.null(models) && is.null(fun.find.models)){
         fun.find.models <- function(dir)list.files(dir,pattern=".*\\.lst",full.names=TRUE)
     }
+
+    
     if(!missing(secs.rep) && missing(hours.run)){
         hours.run <- 24
     } else if (missing(hours.run)) {
@@ -42,11 +44,11 @@ NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NUL
 
     
 
-    fun.file.rds <- function(dir.diag,run) file.path(dir.diag,paste0(run,"/NMgof_",run,"_gof_runtime.rds"))
+    fun.file.rds <- function(dir.diag,model) file.path(dir.diag,paste0(model,"/NMgof_",model,"_gof_runtime.rds"))
 
     fun.run <- function(nmod){
         model <- dt.mods[nmod,model]
-        cat(sprintf("\n----------- model %s ---------------\n",model))
+        ## cat(sprintf("\n----------- model %s ---------------\n",model))
         
         path.lst <- dt.mods[nmod,path.lst]
 
@@ -65,7 +67,7 @@ NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NUL
 ### read and prepare data end
         
         plots.run <- try(fun.gof(dt=dt.run,dir.diag=dir.diag,...))
-
+        
 ### save plots
         if(!"try-error"%in%class(plots.run)){
             names.plots <- names(plots.run)
@@ -74,19 +76,23 @@ NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NUL
             if(!dir.exists(dir.diag.nmod)) dir.create(dir.diag.nmod)
             
             
-            silent <- lapply(names.plots,function(x)
-                ggwrite(plots.run[[x]],file=file.path(dir.diag.nmod,paste0(x,"_",model,".pdf")),onefile=TRUE,canvas="wide-screen",script=script,save=TRUE,show=F)
-                )
+            silent <- lapply(names.plots,function(x){
+                res <- try(ggwrite(plots.run[[x]],file=file.path(dir.diag.nmod,paste0(x,"_",model,".pdf")),onefile=TRUE,canvas="wide-screen",script=script,save=TRUE,show=F))
+                if("try-error"%in%class(res)) dev.off()
+                res
+            })
+
             
 ### save plots done
-
-            info.save <- list(model=model
-                             ,time=Sys.time()
-                              )
-            
-            saveRDS(info.save,file=dt.mods[nmod,path.info])
-            
         }
+        info.save <- list(model=model
+                         ,time=Sys.time()
+                          )
+        
+        
+        saveRDS(info.save,file=dt.mods[nmod,path.info])
+        
+        
     }
 
     while(time.now<time.stop){
@@ -94,9 +100,9 @@ NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NUL
         dt.mods <- data.table(
             path.lst = if(is.null(models)){
                            fun.find.models(dir.models)
-                           } else {
-                               models
-                           }
+                       } else {
+                           models
+                       }
         )
         
         
@@ -104,32 +110,42 @@ NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NUL
            ,model:=sub("run","",basename(path.lst)) ][
            ,model:=sub("\\..+","",model) ][
            ,run:=fnExtension(basename(path.lst),"") ][
-           ,path.info:=fun.file.rds(dir.diag,run) ][
+           ,path.info:=fun.file.rds(dir.diag,model) ][
            ,gofs.exist:=file.exists(path.info) ][
            ,ROW:=1:.N ][
-           ,time.gof:=as.POSIXct("1900-01-01 00:00:00")
+            ## ,time.gof:=as.POSIXct("1900-01-01 00:00:00")
+           ,time.gof:=Sys.time()
         ]
 
         if(any(dt.mods[,gofs.exist])){
             dt.mods[gofs.exist==TRUE,time.gof:=readRDS(path.info)$time,by=.(ROW)]
         }
 
+        
         if(update.only){
             dt.mods <- dt.mods[!gofs.exist|mtime>time.gof]
         }
 
         if(nrow(dt.mods)==0) {
-            message("No models to process. Exiting.")
-            return(invisible(NULL))
-        }
+            ##message("No models to process. Exiting.")
+            ## return(invisible(NULL))
+        } else {
         setorder(dt.mods,-mtime)
         print(dt.mods)
-        
-        for(nmod in 1:dt.mods[,.N]){
-            tmp <- try(fun.run(nmod))
+        Nmods <- dt.mods[,.N]
+
+        for(nmod in 1:Nmods){
+            model <- dt.mods[nmod,model]
+            cat(sprintf("\n----------- model %s (%d/%d) ---------------\n",model,nmod,Nmods))
+
+            tmp <- fun.run(nmod)
             ## tmp <- fun.run(nmod)
         }
+        }
         time.now <- Sys.time()
+        if((time.now+secs.rep)<time.stop) {
+            Sys.sleep(secs.rep)
+        }
     }
 
     return(invisible(NULL))
