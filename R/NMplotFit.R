@@ -7,8 +7,8 @@
 ## DV.
 
 ## col.nomtime must be an argument
-NMplotFit <- function(dt,models=NULL,type.mean="geometric",by.split=NULL,col.grp=NULL,col.nomtime,ci=TRUE,colour="model",colour.dv=FALSE,facets="CMT~DOSE",simplify=TRUE){
-    
+NMplotFit <- function(dt,models=NULL,type.mean="geometric",by.split=NULL,col.grp=NULL,col.nomtime,ci=TRUE,colour="model",colour.dv=FALSE,facets="CMT~DOSE",simplify=TRUE,debug=F){
+    if(debug) browser()
     
     dt <- dt[EVID==0]
     if(!is.null(models)){
@@ -63,12 +63,14 @@ NMplotFit <- function(dt,models=NULL,type.mean="geometric",by.split=NULL,col.grp
             geom_line(aes_string(y="value.pred",colour=colour,linetype="type.pred"),data=function(y)y[type=="means"&!is.na(model)])+
             ## facet needs to be based on arguments analyte and by?
             ## facet_grid(CMT~DOSE,scales="free_y")+
-            ## facet_grid(as.formula(facets),scales="free_y") +
             labs(title=x,colour="",linetype="",shape="",y="") + 
             scale_colour_discrete(na.translate = F)
         p1
+        if(!is.null(facets)){
+            p1 <- p1 + facet_grid(as.formula(facets),scales="free_y") 
+        }
     })
-    if(simplify && length(plots.preds.time)) {
+    if(simplify && length(plots.preds.time)==1) {
         plots.preds.time <- plots.preds.time[[1]]
     }
 

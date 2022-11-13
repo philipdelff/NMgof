@@ -27,7 +27,7 @@
 ##' @family Plotting
 ##' @export
 
-NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,covs.char,fun.file=identity,save=FALSE,show=TRUE,script=NULL,return.data=FALSE,title=NULL,structure="flat",debug=F){
+NMplotBSV <- function(data,regex.eta,names.eta=NULL,col.id="ID",covs.num,covs.char,fun.file=identity,save=FALSE,show=TRUE,script=NULL,return.data=FALSE,title=NULL,structure="flat",debug=F){
 
     if(debug) {browser()}
     
@@ -35,7 +35,8 @@ NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,
 
     if(missing(covs.num)) covs.num <- NULL
     if(missing(covs.char)) covs.char <- NULL
-
+    if(missing(regex.eta)) regex.eta <- "^ETA[1-9]$|^ET[A]{0,1}[1-9][0-9]$"
+    
 #### Section start: dummy variables, only not to get NOTE's in pacakge checks ####
 
     value  <- NULL
@@ -49,10 +50,9 @@ NMplotBSV <- function(data,regex.eta="^ETA",names.eta=NULL,col.id="ID",covs.num,
 
     
     all.output <- list()
-    
     names.etas <-
         names(pkpars)[
-            grep(regex.eta,names(pkpars))
+            grepl(regex.eta,names(pkpars))
         ]
 
     ## if specified to be a covariate, drop the eta
