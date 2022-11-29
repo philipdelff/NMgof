@@ -1,9 +1,13 @@
 ##' search for models and update or overwrite goodness of fit plots
 ##'
-##' @param dir.models
+##' @param dir.models Directory in which to look for models.
+##' @param models Paths to specific Nonmem models to analyze. If
+##'     specified, dir.models not used.
+##' @param fun.find.models A function to apply to filenames found in
+##'     dir.models before accepting them as output control streams. If
+##'     models not specified, the default is to only look at files
+##'     ending in .lst.
 ##' @param dir.diag
-##' @param models
-##' @param fun.find.models
 ##' @param fun.gof
 ##' @param update.only Use TRUE to only run on a model if the model
 ##'     was run since last time GOF plots were generated. You should
@@ -20,7 +24,7 @@
 ##'     fun.find.models
 ##' @param wipe.existing Not implemented yet. Intented to mean that
 ##'     everything existing in the dir will be deleted if NMgof runs
-##'     succesfully. 
+##'     succesfully.
 ##' @param ... Arguments sent to fun.gof
 ##' @import data.table
 ##' @export

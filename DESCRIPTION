@@ -1,15 +1,13 @@
 Package: NMgof
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: Nonmem Goodness of Fit Plots Automated 
+Version: 0.0.0.9001
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Philip",
+           family = "Delff",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to
-    pick a license
+           email = "philip@delff.dk")
+Description: Provides a functions to monitor Nonmem models and regenerate goodness of fit plots as they get (re-) estimated. Also, a set of simple goodness of fit plots are included but one can use any function to generate the outputs.
+License: use_mit_license()
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
