@@ -30,13 +30,22 @@
 ##' @export
 
 NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NULL,fun.gof,update.only=TRUE,secs.rep,hours.run,script=NULL){
-
+    
     if(missing(fun.find.models)) fun.find.models <- NULL 
     if(missing(models)) models <- NULL 
     stopifnot(is.null(fun.find.models)||is.null(models))
     if(is.null(models) && is.null(fun.find.models)){
         fun.find.models <- function(dir)list.files(dir,pattern=".*\\.lst",full.names=TRUE)
     }
+
+    if(!is.list(fun.gof)) {
+        stop("fun.gof must be a list. Either containing a function and args or a list of combination of such.")
+        }
+    ## if only one gof function is given, it may be a list of just fun and args
+    if(length(fun.gof)==2 && all(cc(fun,args)%in%names(fun.gof))){
+        fun.gof <- list(fun.gof)
+    }
+    
 
     if(missing(secs.rep)) secs.rep <- NULL
     if(!is.null(secs.rep) && missing(hours.run)){
@@ -64,11 +73,22 @@ NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NUL
         if(!file.exists(this.file.data)) this.file.data <- "extract"
         
         ## dt.run <- NMscanData(run,file.data=function(x)fnExtension(fnAppend(x,"input"),".rds"))
-        dt.run <- NMscanData(path.lst,file.data=this.file.data)
+        dt.run <- try(NMscanData(path.lst,file.data=this.file.data))
+        
+        if("try-error"%in%class(dt.run)) {
+            message("Reading of model results data failed. Skipping this model.")
+            return(NULL)
+        }
         meta <- NMdata:::NMinfoDT(dt.run)
         details <- meta$details
 
-        if(!is.null(fun.repair.data)) dt.run <- fun.repair.data(dt.run)
+        if(!is.null(fun.repair.data)) dt.run.try <- try(fun.repair.data(dt.run))
+        
+        if("try-error"%in%class(dt.run.try)) {
+            message("Data repair function failed. Not applied.")
+        } else {
+            dt.run <- dt.run.try
+        }
         NMdata:::writeNMinfo(dt.run,meta=meta)
         
 ### read and prepare data end
@@ -81,6 +101,7 @@ NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NUL
             
             ## plots.run <- try(fun.gof[[nfun]]$fun(dt=dt.run,fun.gof[[nfun]]$args))
             plots.run <- try(
+                
                 do.call(fun.gof[[nfun]]$fun,c(fun.gof[[nfun]]$args,list(dt=dt.run)))
                              )
             
