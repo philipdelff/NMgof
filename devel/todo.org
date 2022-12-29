@@ -1,9 +1,14 @@
 * NMgof todo
 
+** NMgof
+
+*** TODO Support subset element
+*** TODO Automatically create dir.diag if not existing
 ** NMplotBSV
+*** TODO method to read Eta names from control stream
 *** DONE 0,0 grid
 ** NMplotDiags
-*** TODO Swap to obs on y, pred on x
+*** DONE Swap to obs on y, pred on x
 *** TODO log-log versions
 *** DONE diagonal dashed blue
 *** DONE trendline full red

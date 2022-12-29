@@ -35,8 +35,6 @@ NMplotFit <- function(dt,models=NULL,type.mean="geometric",by.split=NULL,col.grp
     dt.all <- rbind(dt,dt.means,fill=T)
 
     
-    plots <- list()
-
     if(is.null(by.split)){
         data.split <- list(" "=dt.all)
     } else {

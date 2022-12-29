@@ -30,10 +30,10 @@ NMplotDiags <- function(data,by.split=NULL,facet=NULL,colour=NULL){
             geom_abline(slope=1,intercept = 0,colour="blue",linetype="dashed")+
             geom_smooth(method="loess",formula=y~x,se=FALSE,colour="red")+
             labs(x="Population predictions",y="Observations",title=paste(name.data))+
-             coord_cartesian(xlim=c(xymin, xymax), 
-                             ylim=c(xymin, xymax))## +
+            ## coord_cartesian(xlim=c(xymin, xymax), 
+            ##                          ylim=c(xymin, xymax))## +
             ## coord_fixed(ratio = 1)
-        
+            theme(aspect.ratio=1)
         if(!is.null(facet)){
             res$pred.dv <- res$pred.dv +
                 facet_wrap(as.formula(paste0("~",paste(facet,collapse="+"))),scales="free")
