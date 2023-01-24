@@ -1,3 +1,5 @@
+##' @details If EVID is amoung data columns, only EVID==0 will be
+##'     considered.
 ##' @export
 
 #### diagonal comparisons. Log is missing. Generalize splitting
@@ -6,10 +8,11 @@
 
 
 NMplotDiags <- function(data,by.split=NULL,facet=NULL,colour=NULL){
-    plots.diag <- list()
-    model <- paste(unique(data[,model],collapse="+"))
+    
+    if("EVID"%in%colnames(data)){
+        data <- data[EVID==0]
+    }
 
-    data <- data[EVID==0]
     if(is.null(by.split)){
         data.split <- list(" "=data)
     } else {
@@ -36,7 +39,8 @@ NMplotDiags <- function(data,by.split=NULL,facet=NULL,colour=NULL){
             theme(aspect.ratio=1)
         if(!is.null(facet)){
             res$pred.dv <- res$pred.dv +
-                facet_wrap(as.formula(paste0("~",paste(facet,collapse="+"))),scales="free")
+                ## facet_wrap(as.formula(paste0("~",paste(facet,collapse="+"))),scales="free")
+                facet_wrap(facet,scales="free")
         }
         
         res$ipred.dv <- res$pred.dv + aes(IPRED,DV) +

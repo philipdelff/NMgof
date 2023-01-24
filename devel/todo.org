@@ -2,8 +2,11 @@
 
 ** NMgof
 
-*** TODO Support subset element
+*** DONE Support subset element
 *** TODO Automatically create dir.diag if not existing
+*** TODO Name outputs with prefix if fun.gof is named
+*** TODO Rerun each function depending on digest
+Each function would need some object with hash values for previous run
 ** NMplotBSV
 *** TODO method to read Eta names from control stream
 *** DONE 0,0 grid

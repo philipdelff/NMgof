@@ -1,40 +1,52 @@
-
+##' @param cols.pred Columns which means will be plotted with lines. Name the elements to change legend texts (Say c("Individual predictions"="IPRED")).
 ##' @import data.table
 ##' @importFrom NMcalc means
 ##' @export
 
-## This should be generalized with arguments for PRED, IPRED and
-## DV.
+## This should be generalized with argument for DV.
 
 ## col.nomtime must be an argument
-NMplotFit <- function(dt,models=NULL,type.mean="geometric",by.split=NULL,col.grp=NULL,col.nomtime,ci=TRUE,colour="model",colour.dv=FALSE,facets="CMT~DOSE",simplify=TRUE,debug=F){
+NMplotFit <- function(dt,models=NULL,type.mean="geometric",by.split=NULL,col.grp=NULL,col.nomtime,ci=TRUE,colour="model",colour.dv=FALSE,facets="CMT~DOSE",simplify=TRUE,cols.pred=c("Population predictions"="PRED","Individual predictions"="IPRED"),debug=F){
     if(debug) browser()
+
+    if(!is.data.table(dt)) dt <- as.data.table(dt)
+    if("EVID" %in% colnames(dt)){
+        dt <- dt[EVID==0]
+    }
     
-    dt <- dt[EVID==0]
     if(!is.null(models)){
         dt <- dt[model%in%models]
     }
     
     ##    by.all.1 <- cc(model,devpart,DOSE,dose,NOMTIME,PARENT,METAB,ABD)
     by.all <- unique(c(by.split,col.nomtime,"model",col.grp))
-    
-    dt <- rbind(transform(dt[model==dt[1,model]],model=NA,PRED=NA,IPRED=NA,type="obs"),
+
+    dtmod <- dt[model==dt[1,model]]
+    dtmod[,(c("model",cols.pred)):=NA][
+       ,type:="obs"]
+
+    dt <- rbind(dtmod,
                 transform(dt,DV=NA,type="model"),
                 fill=T)
     
     
-    dt.pred <- dt[,append(list(
-        PRED=means(PRED,type=type.mean,ci=FALSE)
-       ,IPRED=means(IPRED,type=type.mean,ci=FALSE)
-    ),
-    setNames(means(DV,type=type.mean,ci=TRUE),c("mDV","mDVll","mDVul"))
-    ),by=by.all]
+    dt.pred <- dt[,append(lapply(.SD,means,type=type.mean,ci=FALSE),
+                          setNames(means(DV,type=type.mean,ci=TRUE),c("mDV","mDVll","mDVul"))
+                          )
+                         ,.SDcols=cols.pred
+                 ,by=by.all]
     
-    dt.means <- melt(dt.pred,measure.vars=cc(PRED,IPRED),variable.name="type.pred",value.name="value.pred")
+
+    dt.means <- melt(dt.pred,measure.vars=cols.pred,variable.name="type.pred",value.name="value.pred")
     dt.means[,type:="means"]
+    if(!is.null(names(cols.pred))){
+        
+        setnames(dt.means,"type.pred","type.pred.raw")
+        dt.means <- mergeCheck(dt.means,data.table(type.pred.raw=cols.pred,type.pred=names(cols.pred)),by="type.pred.raw")
+    }
     dt.all <- rbind(dt,dt.means,fill=T)
 
-    
+
     if(is.null(by.split)){
         data.split <- list(" "=dt.all)
     } else {
