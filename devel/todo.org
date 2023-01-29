@@ -2,6 +2,7 @@
 
 ** NMgof
 
+*** TODO Change argument canvas default value to NULL once tracee 0.0.3 is out
 *** DONE Support subset element
 *** TODO Automatically create dir.diag if not existing
 *** TODO Name outputs with prefix if fun.gof is named

@@ -37,11 +37,11 @@
 ##'     control stream of the model being processed. In this case,
 ##'     there will be no timestamp in stamps. The time stamp will also
 ##'     be suppressed with time.stamp="".
-##' @param ... Arguments sent to fun.gof
+##' @param canvas Passed to ggwrite for plots.
 ##' @import data.table
 ##' @export
 
-NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NULL,fun.gof,update.only=TRUE,secs.rep,hours.run,formats.ft="png",script=NULL,time.stamp=NULL){
+NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NULL,fun.gof,update.only=TRUE,secs.rep,hours.run,formats.ft="png",script=NULL,time.stamp=NULL,canvas="standard"){
     
     if(missing(fun.find.models)) fun.find.models <- NULL 
     if(missing(models)) models <- NULL 
@@ -132,7 +132,7 @@ NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NUL
                     ## res <- try(ggwrite(plots.run[[x]],file=file.path(dir.diag.nmod,paste0(x,"_",model,".pdf")),onefile=TRUE,canvas="wide-screen",script=script,save=TRUE,show=F))
                     
                     res <- try(
-                        writer(plots.run[[x]],file=file.out,save=T,show=F,formats.ft=formats.ft,script=script,time=time.stamp)
+                        writer(plots.run[[x]],file=file.out,save=T,show=F,formats.ft=formats.ft,script=script,time=time.stamp,canvas=canvas)
                     )
                     if("try-error"%in%class(res)) try(dev.off())
                     res
