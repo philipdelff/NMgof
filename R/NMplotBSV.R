@@ -196,6 +196,7 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,col.id="ID",covs.num,covs.ch
             DT2 <- melt(DT,measure.vars=covs.char,id.vars=c("ID","param","value"),value.name="val.cov",value.factor=T)
             sets <- split(DT2,by="variable")
             p.iiv.covsc <- lapply(sets,function(dat){
+                if(is.numeric(dat[,val.cov])) dat[,val.cov:=factor(val.cov)]
                 ggplot(dat,aes(val.cov,value))+
                     geom_hline(yintercept=0,linetype=2) +
                     geom_boxplot(outlier.shape=NA,colour="blue")+
