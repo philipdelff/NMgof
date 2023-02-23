@@ -14,13 +14,23 @@ NMgof(
   update.only = TRUE,
   secs.rep,
   hours.run,
-  script = NULL
+  formats.ft = "png",
+  script = NULL,
+  time.stamp = NULL,
+  canvas = "standard"
 )
 }
 \arguments{
+\item{dir.models}{Directory in which to look for models.}
+
 \item{models}{file names to look for in dir.models. Notice, just
 file names, not with directories. Use either models or
 fun.find.models}
+
+\item{fun.find.models}{A function to apply to filenames found in
+dir.models before accepting them as output control streams. If
+models not specified, the default is to only look at files
+ending in .lst.}
 
 \item{update.only}{Use TRUE to only run on a model if the model
 was run since last time GOF plots were generated. You should
@@ -33,11 +43,25 @@ asking for a loop of forced updates.}
 updates every secs.rep seconds? Default is 24 hours if
 secs.rep is provided.}
 
+\item{script}{If not NULL, outputs will be stamped with
+tracee::createStamp. \code{script} is intended to include a path to
+the script from which the code is run.}
+
+\item{time.stamp}{Passed to tracee::writeFlextab and
+tracee::ggwrite as the time argument. This is further passed
+to tracee::createStamp. It will be the first string in the
+sectond line of the stamps. This string will be followed by
+the output file name. time.stamp="model" has a special meaning
+where the relative path (from working directory) to the output
+control stream of the model being processed. In this case,
+there will be no timestamp in stamps. The time stamp will also
+be suppressed with time.stamp="".}
+
+\item{canvas}{Passed to ggwrite for plots.}
+
 \item{wipe.existing}{Not implemented yet. Intented to mean that
 everything existing in the dir will be deleted if NMgof runs
 succesfully.}
-
-\item{...}{Arguments sent to fun.gof}
 }
 \description{
 search for models and update or overwrite goodness of fit plots

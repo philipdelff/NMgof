@@ -7,8 +7,11 @@
 ##'     dir.models before accepting them as output control streams. If
 ##'     models not specified, the default is to only look at files
 ##'     ending in .lst.
-##' @param dir.diag
-##' @param fun.gof
+##' @param dir.diag The directory to write output to.
+##' @param fun.gof A list of functions to be run. Instead of just a
+##'     function, an element in the list can be a new list including
+##'     fun (the function) and par (arguments with values to be passed
+##'     to fun).
 ##' @param update.only Use TRUE to only run on a model if the model
 ##'     was run since last time GOF plots were generated. You should
 ##'     use update.only if you have changed the GOF plot function and
@@ -39,6 +42,7 @@
 ##'     be suppressed with time.stamp="".
 ##' @param canvas Passed to ggwrite for plots.
 ##' @import data.table
+##' @import NMdata
 ##' @export
 
 NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NULL,fun.gof,update.only=TRUE,secs.rep,hours.run,formats.ft="png",script=NULL,time.stamp=NULL,canvas="standard"){

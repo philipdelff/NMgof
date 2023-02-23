@@ -1,8 +1,16 @@
-#### One interface for ggwrite and writeFlextab
+##' One interface for ggwrite and writeFlextab
+##' @param x
+##' @param file
+##' @param save
+##' @param show
+##' @param formats.ft
+##' @param script
+##' @param canvas
+##' @param ...
+##' @import tracee
+##' @export
 
 ## add ,args.ggwrite and and args.flextable
-
-##' @export
 writer <- function(x,file,save,show,formats.ft,script=NULL,canvas="standard",...){
 
     
