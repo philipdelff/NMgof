@@ -16,6 +16,7 @@ NMplotDiags <- function(data,by.split=NULL,facet=NULL,colour=NULL){
     if(is.null(by.split)){
         data.split <- list(" "=data)
     } else {
+        if(!by.split%in%colnames(data)) stop("If used, by.split must refer to a column in ouput or input data.")
         data.split <- split(data,by=by.split)
     }
 
