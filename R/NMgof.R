@@ -41,7 +41,7 @@
 ##' @import data.table
 ##' @export
 
-NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NULL,fun.gof,update.only=TRUE,secs.rep,hours.run,formats.ft="png",script=NULL,time.stamp=NULL,canvas="standard"){
+NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NULL,fun.gof,update.only=TRUE,secs.rep,hours.run,formats.ft="png",script=NULL,time.stamp=NULL,canvas="standard",args.NMscanData=NULL){
     
     if(missing(fun.find.models)) fun.find.models <- NULL 
     if(missing(models)) models <- NULL 
@@ -87,7 +87,10 @@ NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NUL
         if(!file.exists(this.file.data)) this.file.data <- "extract"
         
         ## dt.run <- NMscanData(run,file.data=function(x)fnExtension(fnAppend(x,"input"),".rds"))
-        dt.run <- try(NMscanData(path.lst,file.data=this.file.data))
+### introduce args.NMscanData as an argument to NMgof.
+        all.args <- c(list(path.lst,file.data=this.file.data),args.NMscanData)
+        dt.run <- try(do.call(NMscanData,all.args))
+        ## dt.run <- try(NMscanData(path.lst,file.data=this.file.data))
         
         if("try-error"%in%class(dt.run)) {
             message("Reading of model results data failed. Skipping this model.")
