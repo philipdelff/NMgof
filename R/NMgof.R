@@ -10,8 +10,8 @@
 ##' @param dir.diag The directory to write output to.
 ##' @param fun.gof A list of functions to be run. Instead of just a
 ##'     function, an element in the list can be a new list including
-##'     fun (the function) and par (arguments with values to be passed
-##'     to fun).
+##'     \code{fun} (the function) and \code{args} (arguments with
+##'     values to be passed to fun).
 ##' @param update.only Use TRUE to only run on a model if the model
 ##'     was run since last time GOF plots were generated. You should
 ##'     use update.only if you have changed the GOF plot function and
@@ -46,6 +46,8 @@
 ##' @export
 
 NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NULL,fun.gof,update.only=TRUE,secs.rep,hours.run,formats.ft="png",script=NULL,time.stamp=NULL,canvas="standard",args.NMscanData=NULL){
+
+    
     
     if(missing(fun.find.models)) fun.find.models <- NULL 
     if(missing(models)) models <- NULL 
@@ -78,8 +80,9 @@ NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NUL
 
     fun.run <- function(nmod){
         
+        
         model <- dt.mods[nmod,model]
-        ## cat(sprintf("\n----------- model %s ---------------\n",model))
+        ## cat(sprintf("\n----------- Model %s ---------------\n",model))
         
         path.lst <- dt.mods[nmod,path.lst]
 
@@ -93,6 +96,7 @@ NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NUL
         ## dt.run <- NMscanData(run,file.data=function(x)fnExtension(fnAppend(x,"input"),".rds"))
 ### introduce args.NMscanData as an argument to NMgof.
         all.args <- c(list(path.lst,file.data=this.file.data),args.NMscanData)
+        
         dt.run <- try(do.call(NMscanData,all.args))
         ## dt.run <- try(NMscanData(path.lst,file.data=this.file.data))
         
@@ -125,8 +129,13 @@ NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NUL
             ## plots.run <- try(fun.gof[[nfun]]$fun(dt=dt.run,fun.gof[[nfun]]$args))
             subset.run <- fun.gof[[nfun]]$subset
             if(is.null(subset.run)) subset.run <- "TRUE"
+            
             plots.run <- try(
-                do.call(fun.gof[[nfun]]$fun,c(fun.gof[[nfun]]$args,list(dt=dt.run[eval(parse(text=subset.run))])))
+                do.call(
+                    fun.gof[[nfun]]$fun
+                   ,
+                    c(fun.gof[[nfun]]$args,list(dt=dt.run[eval(parse(text=subset.run))]))
+                )
             )
             
 ### save plots

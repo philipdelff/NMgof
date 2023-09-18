@@ -59,9 +59,6 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,col.id="ID",covs.num,covs.ch
     names.etas <- setdiff(names.etas,c(covs.num,covs.char))
     
     ## only the ones that vary
-    ## names.etas.var <- names(which(
-    ##     sapply(pkpars[,names.etas,with=F],function(x)length(unique(x)))  > 1
-    ## ))
     names.etas.var <- colnames(
         findCovs(
             findVars(pkpars[,c(col.id,names.etas),with=F])
@@ -100,16 +97,10 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,col.id="ID",covs.num,covs.ch
 
         
         iiv.pairs <- ggpairs(etas,columns=names.etas.var,lower=list(continuous=points.and.smooth),title=title)
-        ## if(save||show){
-        ##     ggwrite(iiv.pairs,file=fun.file("iiv_pairs.png"),script=script,save=save,show=show)
-        ## }
         all.output[["iiv.pairs"]]  <- iiv.pairs
         
         ## etas.l <- gather(etas,param,value,-1)
         etas.l <- melt(etas,id.vars=c(col.id,covs.num,covs.char),measure.vars=names.etas.var,value.name="value",variable.name="param")
-        ##
-        ## compare.names(etas,pkpars)
-        ##   etas.l <- mergeCheck(etas.l,pkpars,by=c(col.id,covs.num,covs.char),allow.cartesian=TRUE)
         
         etas.l.actual <- subset(etas.l,value!=0)
 
@@ -134,9 +125,7 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,col.id="ID",covs.num,covs.ch
             facet_wrap(~param,scales="free")+
             labs(title=title)
 
-        ## if(save||show){
-        ##     ggwrite(gh2,file=fun.file("hists_etas_actual_wgaussian.png"),script=script,save=save,show=show)
-        ## }
+
         all.output[["hists.etas"]]  <- gh2
         
         
@@ -149,7 +138,6 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,col.id="ID",covs.num,covs.ch
             geom_abline(slope=1,intercept=0,linetype=2)+
             facet_wrap(~param)+
             labs(x="Theoretical",y="Observed",title=title)
-        ## ggwrite(plot.qq,file=fun.file("qq_etas.png"),script=script,save=save,show=show)
         all.output[["qq.bsv"]]  <- plot.qq
         
         ## IIV random effects vs covariates
@@ -161,9 +149,6 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,col.id="ID",covs.num,covs.ch
             }
             
             ## use only covariates that vary
-            ## covs.num <- names(which(
-            ##     sapply(pkpars[,covs.num,drop=F],function(x)length(unique(x)))  > 1
-            ## ))
             covs.num <- colnames(findVars(pkpars[,covs.num,with=F]))
             
             etas.l2.n <- etas.l[,c(col.id,"param","value",covs.num),with=FALSE]
@@ -180,7 +165,7 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,col.id="ID",covs.num,covs.ch
                                                        facet_wrap(~param,scales="free")+
                                                        labs(title=title,x=dt[,unique(cov)],y="Eta")
                                       })
-                ## ggwrite(p.iiv.covsn,file=fun.file("iiv_covs_n.png"),script=script,save=save,show=show)
+
                 if(structure=="flat"){
                     all.output <- c(all.output,
                                     setNames(p.iiv.covsn,paste0("iiv_covsn_",names(p.iiv.covsn)))

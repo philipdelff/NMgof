@@ -19,6 +19,26 @@ Each function would need some object with hash values for previous run
 **** DONE smooth with loess
 *** DONE lines on top of points
 ** NMplotIndProfs
+*** TODO Some models don't work
+Here's the model which can't produce individual plots with the previous function: 
+/data/prod_vx708_001_analysis/analysis/VX22-708-003/models/run17.mod
+*** TODO Maybe an easier way with Jahid's approach:
+plist <- lapply(split(dt.indplt, dt.indplt$IDLBL), function(d){
+  ggplot(d,)+
+    geom_point(aes(x=TIME,y=exp(DV), color="DV"), na.rm=TRUE)+
+    geom_line(aes(x=TIME,y=exp(IPRED), color="IPRED"),linetype="dashed", na.rm=TRUE)+
+    geom_line(aes(x=TIME,y=exp(PRED), color="PRED"),linetype="solid", na.rm=TRUE)+
+    geom_vline(aes(xintercept = DSTIME), color = "purple", size = 0.3, alpha = .5, linetype = "solid", na.rm=TRUE)+
+    scale_color_manual(name="",values = c("black","blue","red"))+
+    facet_wrap(.~IDLBL,scales = "free")+
+    theme(axis.title.x=element_blank(),axis.title.y=element_blank(),legend.position = "bottom",
+          strip.text = element_text(face="bold", size=6),strip.background = element_rect(fill = "thistle2",linewidth = 0.5),
+          axis.text = element_text(size=5,angle=45),legend.text = element_text(size=5,color="black"),legend.key.size = unit(0.3,"cm"))
+})
+
+plist1 <- lapply(plist, ggplotGrob)
+ggsave("../../VX22-708-003/PKdiagnostics/run17/indiv-plots_run17.pdf",marrangeGrob(grobs = plist1, ncol=2, nrow = 3, left="VX708 Conc (ng/mL)", bottom="Time after first dose (hours)"),
+       width = 8.5, height= 11, units= "in")
 
 #### todo
 
