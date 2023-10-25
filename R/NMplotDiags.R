@@ -20,6 +20,7 @@ NMplotDiags <- function(data,by.split=NULL,facet=NULL,colour=NULL){
         data.split <- split(data,by=by.split)
     }
 
+    
     names.data.split <- names(data.split)
     plots.diag <- lapply(names.data.split,function(name.data){
         dt1 <- data.split[[name.data]]

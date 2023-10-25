@@ -41,11 +41,12 @@
 ##'     there will be no timestamp in stamps. The time stamp will also
 ##'     be suppressed with time.stamp="".
 ##' @param canvas Passed to ggwrite for plots.
+##' @details functions to be executed by NMgof must take at least one argument: dt. First arg must be the data set to analyze
 ##' @import data.table
 ##' @import NMdata
 ##' @export
 
-NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NULL,fun.gof,update.only=TRUE,secs.rep,hours.run,formats.ft="png",script=NULL,time.stamp=NULL,canvas="standard",args.NMscanData=NULL){
+NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NULL,fun.gof,update.only=TRUE,secs.rep,hours.run,formats.ft="png",formats.gg="pdf",script=NULL,time.stamp=NULL,canvas="standard",args.NMscanData=NULL){
 
     
     
@@ -127,28 +128,46 @@ NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NUL
         for(nfun in seq_along(fun.gof)){
             
             ## plots.run <- try(fun.gof[[nfun]]$fun(dt=dt.run,fun.gof[[nfun]]$args))
-            subset.run <- fun.gof[[nfun]]$subset
-            if(is.null(subset.run)) subset.run <- "TRUE"
+            if(!is.list(fun.gof[[nfun]]) || is.null(fun.gof[[nfun]]$subset)) {
+                subset.run <- "TRUE"
+            } else {
+                subset.run <- fun.gof[[nfun]]$subset
+            }
+
+            this.dir.nmod <- file.path(dir.diag.nmod)
+            ## if subdir is given, add this in
+            if(is.list(fun.gof[[nfun]]) && !is.null(fun.gof[[nfun]][["subdir"]])){
+                this.dir.nmod <- file.path(dir.diag.nmod,fun.gof[[nfun]][["subdir"]])
+                if(!dir.exists(this.dir.nmod)) dir.create(this.dir.nmod)
+            }
+            
+            element.dir.diag <- NULL
+            if(is.list(fun.gof[[nfun]]) && !is.null(fun.gof[[nfun]]$arg.dir.diag)){
+                element.dir.diag <- setNames(list(dir.diag=this.dir.nmod),fun.gof[[nfun]]$arg.dir.diag)
+            }
+
             
             plots.run <- try(
                 do.call(
                     fun.gof[[nfun]]$fun
                    ,
-                    c(fun.gof[[nfun]]$args,list(dt=dt.run[eval(parse(text=subset.run))]))
+                    c(fun.gof[[nfun]]$args,list(dt=dt.run[eval(parse(text=subset.run))]),element.dir.diag)
                 )
             )
             
 ### save plots
             if(!"try-error"%in%class(plots.run)){
+                
                 names.plots <- names(plots.run)
                 
                 silent <- lapply(names.plots,function(x){
-                    file.out <- file.path(dir.diag.nmod,paste0(x,"_",model,".pdf"))
+                    file.out <- file.path(this.dir.nmod,paste0(x,"_",model,".pdf"))
                     message(paste("Writing",file.out))
                     ## res <- try(ggwrite(plots.run[[x]],file=file.path(dir.diag.nmod,paste0(x,"_",model,".pdf")),onefile=TRUE,canvas="wide-screen",script=script,save=TRUE,show=F))
                     
                     res <- try(
-                        writer(plots.run[[x]],file=file.out,save=T,show=F,formats.ft=formats.ft,script=script,time=time.stamp,canvas=canvas)
+                        writer(plots.run[[x]],file=file.out,save=T,show=F,formats.ft=formats.ft,
+                               formats.gg=formats.gg,script=script,time=time.stamp,canvas=canvas)
                     )
                     if("try-error"%in%class(res)) try(dev.off())
                     res

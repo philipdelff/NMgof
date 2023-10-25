@@ -11,7 +11,7 @@
 ##' @export
 
 ## add ,args.ggwrite and and args.flextable
-writer <- function(x,file,save,show,formats.ft,script=NULL,canvas="standard",...){
+writer <- function(x,file,save,show,formats.ft,formats.gg,script=NULL,canvas="standard",...){
 
     
     if("flextable" %in% class(x)) {
@@ -20,7 +20,8 @@ writer <- function(x,file,save,show,formats.ft,script=NULL,canvas="standard",...
         if(is.list(x) && !is.ggplot(x)){
             x <- x[!sapply(x,is.null)]
         }
-        res <- try(ggwrite(x,file=file,script=script,save=save,show=show,onefile=TRUE,canvas=canvas))
+        res <- try(ggwrite(x,file=file,script=script,save=save,show=show,onefile=TRUE,canvas=canvas,
+                           formats=formats.gg))
         ## if("try-error"%in%class(res)) browser()
         res 
     }
