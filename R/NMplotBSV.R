@@ -2,8 +2,17 @@
 ##' from Nonmem
 ##' @param data A dataset - will be converted to data.frame so
 ##'     data.table is OK.
+##' @param file.mod If used, parameter names that ETA's are associated
+##'     with will be derived by looking at \code{$PRED} or \code{$PK}
+##'     in the control stream. Essentially, it looks for where the
+##'     ETA's are found and look for a parameter name to the left of a
+##'     `=` sign. Alternatively, you can hard-code the ETA-parameter
+##'     relationship using \code{regex.eta}.
 ##' @param regex.eta A regular expression defining the naming of the
-##'     ETA's of interest.
+##'     ETA's of interest. See `file.mod` too.
+##' @param parameters Character vector of model parameters to
+##'     include. This will drop ETA's that are not associated with a
+##'     parameter in this vector.
 ##' @param col.id The name of the id column in data. Default is ID
 ##'     like Nonmem.
 ##' @param covs.num Names of columns containing numerical covariates
@@ -27,7 +36,7 @@
 ##' @family Plotting
 ##' @export
 
-NMplotBSV <- function(data,regex.eta,names.eta=NULL,col.id="ID",covs.num,covs.char,save=FALSE,show=TRUE,return.data=FALSE,title=NULL,file.mod,structure="flat",debug=F){
+NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",covs.num,covs.char,save=FALSE,show=TRUE,return.data=FALSE,title=NULL,file.mod,structure="flat",debug=F){
 
     if(debug) {browser()}
     
@@ -42,17 +51,14 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,col.id="ID",covs.num,covs.ch
 ### Section end: dummy variables, only not to get NOTE's in pacakge checks
 
     if(missing(file.mod)) file.mod <- NULL
-    ## if(is.null(file.mod)){
-    ##     details <- NMinfo(data,"details")
-    ##     file.mod <- details$file.mod
-    ## }
 
 ### extract etas
     if(!is.null(file.mod)){
         file.phi <- fnExtension(file.mod,"phi")
         if(file.exists(file.phi)){
             dt.phi <- NMsim:::NMreadPhi(file.phi)
-            dt.etas <- dt.phi[par.type=="ETA"]
+            dt.etas <- dt.phi[par.type=="ETA" ]
+            dt.etas <- dt.etas[get(col.id) %in% data[,get(col.id)]]
             ## only the ones that vary
             dt.etas[,eta.var:=any(value!=0),by=.(parameter)]
             dt.etas.var <- dt.etas[eta.var>0]
@@ -76,7 +82,11 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,col.id="ID",covs.num,covs.ch
     ## merge etas and labels
     dt.etas.var <- mergeCheck(dt.etas.var,names.eta,by="i",all.x=TRUE)
 
-
+    
+    if(!is.null(parameters)){
+        dt.etas.var <- dt.etas.var[label%in%parameters]
+    }
+    
 ##### derive covariates
     pkpars <- as.data.table(data)
     pkpars <- findCovs(pkpars,by="ID",as.fun="data.table")
@@ -91,7 +101,7 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,col.id="ID",covs.num,covs.ch
     }
     if(!all(covs.char%in%names(pkpars))){
         covs.char.drop <- setdiff(covs.char,colnames(pkpars))
-        warning(paste0("The following numerical parameters were not found:\n",paste(covs.char.drop,collapse=", ")))
+        warning(paste0("The following covariates were not found:\n",paste(covs.char.drop,collapse=", ")))
         covs.char <- setdiff(covs.char,covs.char.drop)
         ## use only covariates that vary
         if(length(covs.char)){
@@ -130,7 +140,7 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,col.id="ID",covs.num,covs.ch
     ## }
 
 
-    all.output <- list()
+
     if(F){
 
         names.etas <-
@@ -165,6 +175,9 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,col.id="ID",covs.num,covs.ch
     ## names.etas.var <- setdiff(colnames(etas.w),"ID")
     ## doing this before widening instead
     ## etas.w[,(names.etas.var):=lapply(.SD,function(x){x[x==0] <- NA;x}),.SDcols=names.etas.var]
+
+
+    all.output <- list()
     
     points.and.smooth <- function(data, mapping, method="lm", ...){
         p <- ggplot(data = data, mapping = mapping) + 

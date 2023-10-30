@@ -15,7 +15,7 @@ writer <- function(x,file,save,show,formats.ft,formats.gg,script=NULL,canvas="st
 
     
     if("flextable" %in% class(x)) {
-        writeFlextab(x,file=file,script=script,formats=formats.ft,...)
+        ftwrite(x,file=file,script=script,formats=formats.ft,...)
     } else {
         if(is.list(x) && !is.ggplot(x)){
             x <- x[!sapply(x,is.null)]

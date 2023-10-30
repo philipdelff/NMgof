@@ -1,5 +1,6 @@
 ##' @details If EVID is amoung data columns, only EVID==0 will be
 ##'     considered.
+##' @import data.table
 ##' @export
 
 #### diagonal comparisons. Log is missing. Generalize splitting
