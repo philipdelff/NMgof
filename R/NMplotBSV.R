@@ -36,7 +36,7 @@
 ##' @family Plotting
 ##' @export
 
-NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",covs.num,covs.char,save=FALSE,show=TRUE,return.data=FALSE,title=NULL,file.mod,structure="flat",debug=F){
+NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",covs.num,covs.char,save=FALSE,show=TRUE,return.data=FALSE,title=NULL,file.mod,structure="flat",use.phi=TRUE,auto.map=TRUE,debug=F){
 
     if(debug) {browser()}
     
@@ -50,35 +50,68 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
 
 ### Section end: dummy variables, only not to get NOTE's in pacakge checks
 
-    if(missing(file.mod)) file.mod <- NULL
 
+    if(missing(covs.num)) covs.num <- NULL
+    if(missing(covs.char)) covs.char <- NULL
+    if(missing(file.mod)) file.mod <- NULL
+    if(is.null(file.mod)) auto.map <- FALSE
+
+
+    data <- copy(as.data.table(data))
+    pkpars <- findCovs(data,by="ID",as.fun="data.table")
+    
 ### extract etas
-    if(!is.null(file.mod)){
+    if(use.phi){
+
         file.phi <- fnExtension(file.mod,"phi")
         if(file.exists(file.phi)){
             dt.phi <- NMsim:::NMreadPhi(file.phi)
             dt.etas <- dt.phi[par.type=="ETA" ]
-            dt.etas <- dt.etas[get(col.id) %in% data[,get(col.id)]]
-            ## only the ones that vary
-            dt.etas[,eta.var:=any(value!=0),by=.(parameter)]
-            dt.etas.var <- dt.etas[eta.var>0]
         }
     } else {
         ## for now, we don't prioritize this. Better take them from .phi
         if(missing(regex.eta)) regex.eta <- "^ETA[1-9]$|^ET[A]{0,1}[1-9][0-9]$"
-    }
-
-### get eta labels
-    
-    if(is.null(names.eta)){
-        if(!file.exists(file.mod)){
-            ## this should not be an error - just show ETA 1, ETA 2, etc.
-            stop("Either provide file.mod or")
-        }
-        names.eta <- identifyEtas(file.mod)
         
+
+        names.etas <-
+            names(pkpars)[
+                grepl(regex.eta,names(pkpars))
+            ]
+
+        ## if specified to be a covariate, drop the eta
+        names.etas <- setdiff(names.etas,c(covs.num,covs.char))
+        
+        ## only the ones that vary
+        ## names.etas.var <- colnames(
+        ##     findCovs(
+        ##         findVars(pkpars[,c(col.id,names.etas),with=F])
+        ##        ,by=col.id)
+        ## )
+        ## names.etas.var <- setdiff(names.etas.var,col.id)
+
+        names.etas <- setdiff(names.etas,col.id)
+        dt.etas.tab <- pkpars[,c(col.id,names.etas),with=FALSE]
+        dt.etas <- melt(dt.etas.tab,id.vars=col.id,variable.name="parameter")
+        dt.etas[,i:=as.numeric(gsub("[^0-9]","",parameter))]
     }
 
+### reduce to needed etas
+    dt.etas <- dt.etas[get(col.id) %in% data[,get(col.id)]]
+    ## only the ones that vary
+    dt.etas[,eta.var:=any(value!=0),by=.(parameter)]
+    dt.etas.var <- dt.etas[eta.var>0]
+    
+### get eta labels
+    if(auto.map){
+        if(is.null(names.eta)){
+            if(!file.exists(file.mod)){
+                ## this should not be an error - just show ETA 1, ETA 2, etc.
+                stop("Either provide file.mod or")
+            }
+            names.eta <- identifyEtas(file.mod)
+        }
+    } 
+    
     ## merge etas and labels
     dt.etas.var <- mergeCheck(dt.etas.var,names.eta,by="i",all.x=TRUE)
 
@@ -88,10 +121,6 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
     }
     
 ##### derive covariates
-    pkpars <- as.data.table(data)
-    pkpars <- findCovs(pkpars,by="ID",as.fun="data.table")
-    if(missing(covs.num)) covs.num <- NULL
-    if(missing(covs.char)) covs.char <- NULL
     if(!all(covs.num%in%names(pkpars))){
         covs.num.drop <- setdiff(covs.num,colnames(pkpars))
         warning(paste0("The following numerical parameters were not found:\n",paste(covs.num.drop,collapse=", ")))

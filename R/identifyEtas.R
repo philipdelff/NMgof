@@ -13,7 +13,7 @@ identifyEtas <- function(file.mod){
 
     
     ## dt.code[,i:=as.numeric(gsub(".*[^H]ETA\\(([0-9]+)\\).*","\\1",line2))]
-    dt.code[,i:=as.numeric(sub("\\(ETA\\(([1-9][0-9]*)\\)","\\1",text.eta))]
+    dt.code[,i:=as.numeric(sub(".*ETA\\(([1-9][0-9]*)\\)","\\1",text.eta))]
     
     dt.code[,LHS:=sub("(.*)=.*","\\1",line2)]
 
