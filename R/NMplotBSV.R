@@ -36,7 +36,7 @@
 ##' @family Plotting
 ##' @export
 
-NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",covs.num,covs.char,save=FALSE,show=TRUE,return.data=FALSE,title=NULL,file.mod,structure="flat",use.phi=TRUE,auto.map=TRUE,debug=F){
+NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",covs.num,covs.char,save=FALSE,show=TRUE,return.data=FALSE,title=NULL,file.mod,structure="flat",use.phi,auto.map=TRUE,debug=F){
 
     if(debug) {browser()}
     
@@ -59,6 +59,8 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
 
     data <- copy(as.data.table(data))
     pkpars <- findCovs(data,by="ID",as.fun="data.table")
+
+    use.phi <- !is.null(file.mod)
     
 ### extract etas
     if(use.phi){
@@ -67,8 +69,12 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
         if(file.exists(file.phi)){
             dt.phi <- NMsim:::NMreadPhi(file.phi)
             dt.etas <- dt.phi[par.type=="ETA" ]
+            if(nrow(dt.etas)==0) {
+                use.phi <- FALSE
+            }
         }
-    } else {
+    }
+    if(!use.phi) {
         ## for now, we don't prioritize this. Better take them from .phi
         if(missing(regex.eta)) regex.eta <- "^ETA[1-9]$|^ET[A]{0,1}[1-9][0-9]$"
         
@@ -113,8 +119,11 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
     } 
     
     ## merge etas and labels
-    dt.etas.var <- mergeCheck(dt.etas.var,names.eta,by="i",all.x=TRUE)
-
+    if(!is.null(names.eta)){
+        dt.etas.var <- mergeCheck(dt.etas.var,names.eta,by="i",all.x=TRUE)
+    } else {
+        dt.etas.var[,label:=parameter]
+    }
     
     if(!is.null(parameters)){
         dt.etas.var <- dt.etas.var[label%in%parameters]
