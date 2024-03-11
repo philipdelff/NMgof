@@ -1,3 +1,6 @@
+##' Plots of obs vs pop predictions and obs vs individual predictions
+##'
+##' @param data A data set with observations and model predictions
 ##' @details If EVID is amoung data columns, only EVID==0 will be
 ##'     considered.
 ##' @import data.table

@@ -51,11 +51,12 @@ legends should be collected if you use either R<4.0 or a fully
 updated version of patchwork. If you get multiple labels
 wasting precious screen space, the reason is likely this:
 https://github.com/thomasp85/patchwork/issues/170 This will
-not be fixed in pmxtricks because it will be sorted out as the
+not be fixed in NMgof because it will be sorted out as the
 update of patchwork propagates to the repositories.
 }
 \seealso{
 Other Plotting: 
+\code{\link{NMplotBSVold}()},
 \code{\link{NMplotBSV}()},
 \code{\link{NMplotIndProfs}()},
 \code{\link{theme_pp_facet}()},

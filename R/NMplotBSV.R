@@ -14,7 +14,8 @@
 ##'     include. This will drop ETA's that are not associated with a
 ##'     parameter in this vector.
 ##' @param col.id The name of the id column in data. Default is ID
-##'     like Nonmem.
+##'     like Nonmem. This is not fully working if col.id is different
+##'     from `ID`.
 ##' @param covs.num Names of columns containing numerical covariates
 ##'     to plot the random effects against.
 ##' @param covs.char Names of columns containing categorical
@@ -31,15 +32,13 @@
 ##' @import ggplot2
 ##' @import data.table
 ##' @import stats
-##' @importFrom NMdata findCovs findVars
+##' @import NMdata
 ##' @importFrom GGally ggpairs
 ##' @family Plotting
 ##' @export
 
-NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",covs.num,covs.char,save=FALSE,show=TRUE,return.data=FALSE,title=NULL,file.mod,structure="flat",use.phi,auto.map=TRUE,debug=F){
+NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",covs.num,covs.char,save=FALSE,show=TRUE,return.data=FALSE,title=NULL,file.mod,structure="flat",use.phi,auto.map,...){
 
-    if(debug) {browser()}
-    
     
 #### Section start: dummy variables, only not to get NOTE's in pacakge checks ####
 
@@ -54,51 +53,67 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
     if(missing(covs.num)) covs.num <- NULL
     if(missing(covs.char)) covs.char <- NULL
     if(missing(file.mod)) file.mod <- NULL
-    if(is.null(file.mod)) auto.map <- FALSE
-
-
-    data <- copy(as.data.table(data))
-    pkpars <- findCovs(data,by="ID",as.fun="data.table")
-
+    if(missing(auto.map)||is.null(auto.map)){
+        auto.map <- !is.null(file.mod)
+    }
     use.phi <- !is.null(file.mod)
+    if(!is.null(names.eta)){
+        cols.missing <- setdiff(cc(i,label),colnames(names.eta))
+        if(length(cols.missing)>0){
+            stop("If names.eta is provided, it must be a data.frame including columns called `i` and `label`.")
+        }
+    }
+
+### will be used in ggpairs
+    points.and.smooth <- function(data, mapping, method="lm", ...){
+        p <- ggplot(data = data, mapping = mapping) + 
+            geom_point() + 
+            geom_smooth(method=method, formula=y~x, ...)
+        p
+    }
+
     
-### extract etas
+    data <- copy(as.data.table(data))
+    setnames(data,col.id,"ID")
+    col.id <- "ID"
+    pkpars <- findCovs(data,by=col.id,as.fun="data.table")
+
+    
+### extract eta values from phi file or output tables
     if(use.phi){
 
         file.phi <- fnExtension(file.mod,"phi")
         if(file.exists(file.phi)){
-            dt.phi <- NMsim:::NMreadPhi(file.phi)
+            dt.phi <- NMreadPhi(file.phi,as.fun="data.table")
             dt.etas <- dt.phi[par.type=="ETA" ]
             if(nrow(dt.etas)==0) {
+                ## this will happen for muref models where .phi does
+                ## not contain etas
                 use.phi <- FALSE
             }
         }
     }
     if(!use.phi) {
-        ## for now, we don't prioritize this. Better take them from .phi
-        if(missing(regex.eta)) regex.eta <- "^ETA[1-9]$|^ET[A]{0,1}[1-9][0-9]$"
-        
+        ## if(missing(regex.eta)) regex.eta <- "^ETA[1-9]$|^ET[A]{0,1}[1-9][0-9]$"
+        if(missing(regex.eta)) regex.eta <- "^ETA[1-9][0-9]*$"
 
         names.etas <-
             names(pkpars)[
                 grepl(regex.eta,names(pkpars))
             ]
-
+        
         ## if specified to be a covariate, drop the eta
         names.etas <- setdiff(names.etas,c(covs.num,covs.char))
         
-        ## only the ones that vary
-        ## names.etas.var <- colnames(
-        ##     findCovs(
-        ##         findVars(pkpars[,c(col.id,names.etas),with=F])
-        ##        ,by=col.id)
-        ## )
-        ## names.etas.var <- setdiff(names.etas.var,col.id)
-
         names.etas <- setdiff(names.etas,col.id)
         dt.etas.tab <- pkpars[,c(col.id,names.etas),with=FALSE]
         dt.etas <- melt(dt.etas.tab,id.vars=col.id,variable.name="parameter")
+        
         dt.etas[,i:=as.numeric(gsub("[^0-9]","",parameter))]
+        ## TODO: This was ETAs from output tables. check if all etas
+        ## are found. Preferably based on OMEGA size in ext. If not,
+        ## if i is consecutive. However preferably, the subsetting is
+        ## done first.
     }
 
 ### reduce to needed etas
@@ -111,8 +126,7 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
     if(auto.map){
         if(is.null(names.eta)){
             if(!file.exists(file.mod)){
-                ## this should not be an error - just show ETA 1, ETA 2, etc.
-                stop("Either provide file.mod or")
+                stop("Either provide `file.mod` with `auto.map=TRUE` or `names.eta` as a data.frame associating ETAs and parameters.")
             }
             names.eta <- identifyEtas(file.mod)
         }
@@ -120,11 +134,13 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
     
     ## merge etas and labels
     if(!is.null(names.eta)){
-        dt.etas.var <- mergeCheck(dt.etas.var,names.eta,by="i",all.x=TRUE)
+        dt.etas.var <- mergeCheck(dt.etas.var,names.eta[,.(i,label)],by="i",all.x=TRUE)
     } else {
         dt.etas.var[,label:=parameter]
     }
-    
+
+### this should be a more general subset. A list with one or two
+### of i and label. Like subset=list(i=c(1,2,3),label=cc(CL))
     if(!is.null(parameters)){
         dt.etas.var <- dt.etas.var[label%in%parameters]
     }
@@ -147,92 +163,36 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
         }
     }
     ## add covariates to etas
-    if(is.character(pkpars[,ID])) dt.etas.var[,ID:=as.character(ID)]
-    dt.etas.var <- mergeCheck(dt.etas.var,pkpars[,c("ID",covs.num,covs.char),with=FALSE],by=c("ID"))
+    if(pkpars[,is.character(get(col.id))]){
+        dt.etas.var[,(col.id):=as.character(get(col.id))]
+    }
+    ## dt.etas.var <- mergeCheck(dt.etas.var,pkpars[,c(col.id,covs.num,covs.char),with=FALSE],by=col.id)
+    dt.etas.var <- mergeCheck(dt.etas.var,pkpars[,c(col.id,setdiff(colnames(pkpars),colnames(dt.etas.var))),with=FALSE],by=col.id)
 
     ## only keep non-0 ETAs (should be an option)
-    ## dt.etas.var[value==0,value:=NA_real_]
     dt.etas.var <- dt.etas.var[value!=0]
 
-    ## make a wide version for 
+    
     etas.l <- dt.etas.var
-    etas.w <- dcast(etas.l,ID~label,value.var="value")
-    names.etas.var <- setdiff(colnames(etas.w),"ID")
+    names.etas.var <- etas.l[,unique(label)]
+    ## make a wide version for ggpairs
+    ## names.etas.var <- setdiff(colnames(etas.w),"ID")
 
     if(!length(names.etas.var)){        
         message("No BSV random effects found in parameter table.")
         return(invisible(NULL))
     }
-    
-##### this is if taking etas from the output tables
-    ## else {
-    ##     ## only using relevant names.eta entries
-    ##     names.eta <- names.eta[intersect(names(names.eta),names.etas.var)]
-    ##     to.remove <- intersect(as.character(names.eta),colnames(pkpars))
-    ##     if(length(to.remove)) pkpars[,(to.remove):=NULL]
-    ##     setnames(pkpars,names(names.eta),as.character(names.eta),skip_absent=TRUE)
-
-    ##     idx <- match(names(names.eta),names.etas.var)
-    ##     names.etas.var[idx] <-
-    ##         as.character(names.eta[match(names.etas.var,names(names.eta))])
-    ## }
-
-
-
-    if(F){
-
-        names.etas <-
-            names(pkpars)[
-                grepl(regex.eta,names(pkpars))
-            ]
-
-        ## if specified to be a covariate, drop the eta
-        names.etas <- setdiff(names.etas,c(covs.num,covs.char))
-        
-        ## only the ones that vary
-        names.etas.var <- colnames(
-            findCovs(
-                findVars(pkpars[,c(col.id,names.etas),with=F])
-               ,by=col.id)
-        )
-        names.etas.var <- setdiff(names.etas.var,col.id)
-    }
 
     
-    ## etas <- NULL
-    ## etas.l <- NULL
-    
-
-    ##        etas <- pkpars[,c("ID", names.etas.var,covs.num,covs.char)]
-    ## etas <- unique(pkpars[,c("ID", names.etas.var,covs.num,covs.char),with=F])
-    ## etas.w <- dcast(dt.etas.var,ID~label,value.var="value")
-    
-### etas against each other. Notice, omitting those = 0.
-    ##etas[,(names.etas.var):=lapply(.SD,function(x){x[x==0] <- NA;x}),.SDcols=names.etas.var]
-
-    ## names.etas.var <- setdiff(colnames(etas.w),"ID")
-    ## doing this before widening instead
-    ## etas.w[,(names.etas.var):=lapply(.SD,function(x){x[x==0] <- NA;x}),.SDcols=names.etas.var]
-
-
     all.output <- list()
     
-    points.and.smooth <- function(data, mapping, method="lm", ...){
-        p <- ggplot(data = data, mapping = mapping) + 
-            geom_point() + 
-            geom_smooth(method=method, formula=y~x, ...)
-        p
-    }
 
-    
+### ggpairs
+    etas.w <- dcast(etas.l,ID~label,value.var="value")
     iiv.pairs <- ggpairs(etas.w,columns=names.etas.var,lower=list(continuous=points.and.smooth),title=title)
     all.output[["iiv.pairs"]]  <- iiv.pairs
 
-#### we already have the long format, right?
-    ## etas.l <- gather(etas,param,value,-1)
-    ## etas.l <- melt(etas.w,id.vars=c(col.id,covs.num,covs.char),measure.vars=names.etas.var,value.name="value",variable.name="param")
     
-
 #### this is the histograms of non-zeros and with gaussian approximations
     dat <- etas.l
     dat[,param:=label]
@@ -268,40 +228,40 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
     all.output[["qq.bsv"]]  <- plot.qq
     
     ## IIV random effects vs covariates
-    if(!is.null(covs.num)){
-        
+    if(!is.null(covs.num)){        
         
         etas.l2.n <- etas.l[,c(col.id,"param","value",covs.num),with=FALSE]
 
-        if(
-            length(setdiff(colnames(etas.l2.n),c("ID","param","value")))>0
-        ){
-            etas.covs.n <- melt.data.table(etas.l2.n,variable.name="cov",value.name="val.cov",measure.vars=names(etas.l2.n)[!names(etas.l2.n)%in%c("ID","param","value")])
+        ## etas.covs.n <- melt.data.table(etas.l2.n,variable.name="cov",value.name="val.cov",measure.vars=setdiff(colnames(etas.l2.n),c("ID","param","value")))
+        etas.covs.n <- melt.data.table(etas.l,variable.name="cov",value.name="val.cov",measure.vars=covs.num)
+        
 ### I think this one removes covariates that are etas. Not really
 ### necessary and if anything, it should be done much earlier.
-            ## data.plot <- etas.covs.n[!grepl(regex.eta,cov)]
-            p.iiv.covsn <- lapply(split(etas.covs.n,by="cov"),
-                                  function(dt){ggplot(dt,aes(val.cov,value))+
-                                                   geom_point()+
-                                                   geom_smooth(method="lm", formula=y~x)+
-                                                   facet_wrap(~param,scales="free")+
-                                                   labs(title=title,x=dt[,unique(cov)],y="Eta")
-                                  })
+        ## data.plot <- etas.covs.n[!grepl(regex.eta,cov)]
+        p.iiv.covsn <- lapply(split(etas.covs.n,by="cov"),
+                              function(dt){ggplot(dt,aes(val.cov,value))+
+                                               geom_point()+
+                                               geom_smooth(method="lm", formula=y~x,aes(colour=NULL))+
+                                               facet_wrap(~param,scales="free")+
+                                               labs(title=title,x=dt[,unique(cov)],y="Eta")+
+                                               aes_string(...)
+                              })
 
-            if(structure=="flat"){
-                all.output <- c(all.output,
-                                setNames(p.iiv.covsn,paste0("iiv_covsn_",names(p.iiv.covsn)))
-                                )
-            } else {
-                all.output[["iiv.covsn"]] <- p.iiv.covsn
-            }
+        if(structure=="flat"){
+            all.output <- c(all.output,
+                            setNames(p.iiv.covsn,paste0("iiv_covsn_",names(p.iiv.covsn)))
+                            )
+        } else {
+            all.output[["iiv.covsn"]] <- p.iiv.covsn
         }
+        
     }
     if(length(covs.char)>0){
         
-        etas.l2.c <- etas.l[,c(col.id,"param","value",covs.char),with=F]
-        DT <- data.table(etas.l2.c)
-        DT2 <- melt(DT,measure.vars=covs.char,id.vars=c("ID","param","value"),value.name="val.cov",value.factor=T)
+        ## etas.l2.c <- etas.l[,c(col.id,"param","value",covs.char),with=F]
+        ## DT <- data.table(etas.l2.c)
+        ## DT2 <- melt(DT,measure.vars=covs.char,id.vars=c("ID","param","value"),value.name="val.cov",value.factor=T)
+        DT2 <- melt(etas.l,measure.vars=covs.char,value.name="val.cov",value.factor=T)
         sets <- split(DT2,by="variable")
         p.iiv.covsc <- lapply(sets,function(dat){
             if(is.numeric(dat[,val.cov])) dat[,val.cov:=factor(val.cov)]
@@ -310,11 +270,9 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
                 geom_boxplot(outlier.shape=NA,colour="blue")+
                 geom_jitter(height=0,width=.4,alpha=.5)+
                 facet_wrap(~param,scales="free_y")+
-### this would bring in ggpubr as dependency. Maybe just call in scripts where needed?
-                ## rotate_x_text(45)+
-                labs(title=title,x=dat[,unique(variable)],y="Eta")
+                labs(title=title,x=dat[,unique(variable)],y="Eta")+
+                aes_string(...)
         })
-        ##             ggwrite(p.iiv.covsc,file=fun.file("iiv_covs_c.png"),useNames=TRUE,script=script,save=save,show=show)
         if(structure=="flat"){
             all.output <- c(all.output,
                             setNames(p.iiv.covsc,paste0("iiv_covsc_",names(p.iiv.covsc)))
@@ -327,8 +285,8 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
     ## if there are no plots to return, we return NULL (instead of a list of length 0).
     if(length(all.output)==0&&!return.data){return(NULL)}
     if(return.data){
-        all.output[["etas"]] <- etas.w
-        all.output[["etas.l"]] <- etas.l
+        ## all.output[["etas"]] <- etas.w
+        all.output[["etas"]] <- etas.l
     }
 
     all.output

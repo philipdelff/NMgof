@@ -15,13 +15,17 @@ NMgof(
   secs.rep,
   hours.run,
   formats.ft = "png",
+  formats.gg = "pdf",
   script = NULL,
   time.stamp = NULL,
-  canvas = "standard"
+  canvas = "standard",
+  args.NMscanData = NULL
 )
 }
 \arguments{
 \item{dir.models}{Directory in which to look for models.}
+
+\item{dir.diag}{The directory to write output to.}
 
 \item{models}{file names to look for in dir.models. Notice, just
 file names, not with directories. Use either models or
@@ -31,6 +35,11 @@ fun.find.models}
 dir.models before accepting them as output control streams. If
 models not specified, the default is to only look at files
 ending in .lst.}
+
+\item{fun.gof}{A list of functions to be run. Instead of just a
+function, an element in the list can be a new list including
+\code{fun} (the function) and \code{args} (arguments with
+values to be passed to fun).}
 
 \item{update.only}{Use TRUE to only run on a model if the model
 was run since last time GOF plots were generated. You should
@@ -65,4 +74,7 @@ succesfully.}
 }
 \description{
 search for models and update or overwrite goodness of fit plots
+}
+\details{
+functions to be executed by NMgof must take at least one argument: dt. First arg must be the data set to analyze
 }

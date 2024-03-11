@@ -1,10 +1,10 @@
+
 identifyEtas <- function(file.mod){
 
     lines <- c(NMreadSection(file.mod,section="PRED",keep.comments=FALSE),
                NMreadSection(file.mod,section="PK",keep.comments=FALSE))
 
-    
-    
+ 
     dt.code <- data.table(line.eta = lines[grepl("[^H]ETA",lines)])
     ## remove spaces
     dt.code[,line2:=gsub(" ","",line.eta)]
@@ -25,7 +25,6 @@ identifyEtas <- function(file.mod){
     dt.code.eta[,nrep.LHS:=.N,by=.(LHS)]
     dt.code.eta[nrep.LHS>1,label:=paste0(label," - ETA(",i,")")]
     
-    dt.code.eta
-
+    dt.code.eta[]
 
 }

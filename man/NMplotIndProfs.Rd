@@ -133,6 +133,7 @@ The resulting object can be saved with ggwrite.
 }
 \seealso{
 Other Plotting: 
+\code{\link{NMplotBSVold}()},
 \code{\link{NMplotBSV}()},
 \code{\link{NMplotGOF}()},
 \code{\link{theme_pp_facet}()},

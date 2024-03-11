@@ -17,7 +17,7 @@
 ##'     updated version of patchwork. If you get multiple labels
 ##'     wasting precious screen space, the reason is likely this:
 ##'     https://github.com/thomasp85/patchwork/issues/170 This will
-##'     not be fixed in pmxtricks because it will be sorted out as the
+##'     not be fixed in NMgof because it will be sorted out as the
 ##'     update of patchwork propagates to the repositories.
 ##' @family Plotting
 ##' @import patchwork
