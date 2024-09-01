@@ -411,6 +411,7 @@ NMplotIndProfs <- function(data, run, x="TIME", dv="DV", pred="PRED", ipred=c("I
             } else{
                 data.amt=subset(tmp2,EVID%in%c(1,4))
             }
+            data.amt <- NMexpandDoses(data.amt,col.time=x,col.id="ID",quiet=TRUE)
             p <- p+geom_segment(mapping = aes_string(x = x, xend = x, y = 0, yend = "amt2",colour=par.prof),data=data.amt)
 
         }
@@ -421,11 +422,12 @@ NMplotIndProfs <- function(data, run, x="TIME", dv="DV", pred="PRED", ipred=c("I
         ##  p <- p + geom_point(aes_(shape = as.name(name.obs), colour = as.name(par.prof)))
         if(nrow(subset(tmp2,EVID==0))>0){
             if(is.null(par.prof)){
-                p <- p + geom_point(aes_(shape = name.obs))
+                p <- p + geom_point(aes_(shape = name.obs),data=function(x)subset(x,EVID==0))
             } else {
                 ## p <- p + geom_point(aes_(shape = name.obs))
                 ## p <- p + geom_point(aes_string(shape = name.obs, colour = par.prof))
-                p <- p + geom_point(aes_(shape = eval(name.obs), colour = as.name(par.prof)))
+                p <- p + geom_point(aes_(shape = eval(name.obs), colour = as.name(par.prof)),
+                                    data=function(x)subset(x,EVID==0))
             }
         }
 

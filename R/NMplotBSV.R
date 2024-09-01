@@ -28,7 +28,6 @@
 ##' @param return.data If TRUE, the identified ETA's together with
 ##'     subject id and covariates will be returned in both wide and
 ##'     long format. If FALSE, you just get the plots.
-##' @param debug Start by running browser()?
 ##' @import ggplot2
 ##' @import data.table
 ##' @import stats
@@ -37,7 +36,7 @@
 ##' @family Plotting
 ##' @export
 
-NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",covs.num,covs.char,save=FALSE,show=TRUE,return.data=FALSE,title=NULL,file.mod,structure="flat",use.phi,auto.map,...){
+NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",covs.num,covs.char,save=FALSE,show=TRUE,return.data=FALSE,title=NULL,file.mod,structure="flat",use.phi,auto.map,keep.zeros=FALSE,keep.zeros.pairs=FALSE,...){
 
     
 #### Section start: dummy variables, only not to get NOTE's in pacakge checks ####
@@ -48,7 +47,7 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
     val.cov <- NULL
 
 ### Section end: dummy variables, only not to get NOTE's in pacakge checks
-
+    
 
     if(missing(covs.num)) covs.num <- NULL
     if(missing(covs.char)) covs.char <- NULL
@@ -56,7 +55,10 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
     if(missing(auto.map)||is.null(auto.map)){
         auto.map <- !is.null(file.mod)
     }
-    use.phi <- !is.null(file.mod)
+    if(missing(use.phi)) use.phi <- NULL
+    if(is.null(use.phi)){
+        use.phi <- !is.null(file.mod)
+    }
     if(!is.null(names.eta)){
         cols.missing <- setdiff(cc(i,label),colnames(names.eta))
         if(length(cols.missing)>0){
@@ -66,6 +68,7 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
 
 ### will be used in ggpairs
     points.and.smooth <- function(data, mapping, method="lm", ...){
+        if(nrow(data)==0) return(ggplot(data.table(a=0,b=0)))
         p <- ggplot(data = data, mapping = mapping) + 
             geom_point() + 
             geom_smooth(method=method, formula=y~x, ...)
@@ -76,6 +79,7 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
     data <- copy(as.data.table(data))
     setnames(data,col.id,"ID")
     col.id <- "ID"
+    
     pkpars <- findCovs(data,by=col.id,as.fun="data.table")
 
     
@@ -94,6 +98,7 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
         }
     }
     if(!use.phi) {
+        
         ## if(missing(regex.eta)) regex.eta <- "^ETA[1-9]$|^ET[A]{0,1}[1-9][0-9]$"
         if(missing(regex.eta)) regex.eta <- "^ETA[1-9][0-9]*$"
 
@@ -121,6 +126,13 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
     ## only the ones that vary
     dt.etas[,eta.var:=any(value!=0),by=.(parameter)]
     dt.etas.var <- dt.etas[eta.var>0]
+
+### check that dt.etas.var is unique in IDxETA.
+    if(any(duplicated(dt.etas.var[,.(ID,i)]))){
+        
+        stop("ID and ETA indexes are not unique. Are IDs disjoint in input data? This is not supported by NMplotBSV and may be a bug in the input data set.")
+
+    }
     
 ### get eta labels
     if(auto.map){
@@ -129,12 +141,14 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
                 stop("Either provide `file.mod` with `auto.map=TRUE` or `names.eta` as a data.frame associating ETAs and parameters.")
             }
             names.eta <- identifyEtas(file.mod)
+            cat("the following eta relationships found:\n")
+            print(names.eta)
         }
     } 
     
     ## merge etas and labels
     if(!is.null(names.eta)){
-        dt.etas.var <- mergeCheck(dt.etas.var,names.eta[,.(i,label)],by="i",all.x=TRUE)
+        dt.etas.var <- mergeCheck(dt.etas.var,names.eta[,.(i,label)],by="i",all.x=TRUE,quiet=TRUE)
     } else {
         dt.etas.var[,label:=parameter]
     }
@@ -167,17 +181,20 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
         dt.etas.var[,(col.id):=as.character(get(col.id))]
     }
     ## dt.etas.var <- mergeCheck(dt.etas.var,pkpars[,c(col.id,covs.num,covs.char),with=FALSE],by=col.id)
-    dt.etas.var <- mergeCheck(dt.etas.var,pkpars[,c(col.id,setdiff(colnames(pkpars),colnames(dt.etas.var))),with=FALSE],by=col.id)
+    dt.etas.var <- mergeCheck(dt.etas.var,pkpars[,c(col.id,setdiff(colnames(pkpars),colnames(dt.etas.var))),with=FALSE],by=col.id,quiet=TRUE)
 
     ## only keep non-0 ETAs (should be an option)
-    dt.etas.var <- dt.etas.var[value!=0]
-
-    
     etas.l <- dt.etas.var
-    names.etas.var <- etas.l[,unique(label)]
+    if(!keep.zeros){
+        etas.l <- etas.l[value!=0]
+    }
+    
+   
+
     ## make a wide version for ggpairs
     ## names.etas.var <- setdiff(colnames(etas.w),"ID")
 
+    names.etas.var <- etas.l[,unique(label)]
     if(!length(names.etas.var)){        
         message("No BSV random effects found in parameter table.")
         return(invisible(NULL))
@@ -186,10 +203,16 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
     
     all.output <- list()
     
-
+    
 ### ggpairs
-    etas.w <- dcast(etas.l,ID~label,value.var="value")
-    iiv.pairs <- ggpairs(etas.w,columns=names.etas.var,lower=list(continuous=points.and.smooth),title=title)
+    etas.l.pairs <- copy(dt.etas.var)
+    if(!keep.zeros.pairs){
+        etas.l.pairs <- etas.l.pairs[value!=0]
+    }
+    names.etas.pairs <- etas.l.pairs[,unique(label)]
+    etas.w <- dcast(etas.l.pairs,ID~label,value.var="value")
+    iiv.pairs <- ggpairs(etas.w,columns=names.etas.pairs,lower=list(continuous=points.and.smooth),title=title)
+
     all.output[["iiv.pairs"]]  <- iiv.pairs
 
     
@@ -238,10 +261,11 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
 ### I think this one removes covariates that are etas. Not really
 ### necessary and if anything, it should be done much earlier.
         ## data.plot <- etas.covs.n[!grepl(regex.eta,cov)]
+        
         p.iiv.covsn <- lapply(split(etas.covs.n,by="cov"),
                               function(dt){ggplot(dt,aes(val.cov,value))+
-                                               geom_point()+
-                                               geom_smooth(method="lm", formula=y~x,aes(colour=NULL))+
+                                               geom_point(shape=1, size=1, alpha=0.2)+
+                                               geom_smooth(method="lm", color="red",formula=y~x)+
                                                facet_wrap(~param,scales="free")+
                                                labs(title=title,x=dt[,unique(cov)],y="Eta")+
                                                aes_string(...)
@@ -266,8 +290,8 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
         p.iiv.covsc <- lapply(sets,function(dat){
             if(is.numeric(dat[,val.cov])) dat[,val.cov:=factor(val.cov)]
             ggplot(dat,aes(val.cov,value))+
-                geom_hline(yintercept=0,linetype=2) +
                 geom_boxplot(outlier.shape=NA,colour="blue")+
+                geom_hline(yintercept=0,linetype=2) +
                 geom_jitter(height=0,width=.4,alpha=.5)+
                 facet_wrap(~param,scales="free_y")+
                 labs(title=title,x=dat[,unique(variable)],y="Eta")+

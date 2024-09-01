@@ -8,6 +8,7 @@ identifyEtas <- function(file.mod){
     dt.code <- data.table(line.eta = lines[grepl("[^H]ETA",lines)])
     ## remove spaces
     dt.code[,line2:=gsub(" ","",line.eta)]
+    dt.code[,line2:=gsub("\\t","",line2)]
 
     dt.code <- dt.code[,.(text.eta=regmatches(line2, gregexpr("[^H]ETA\\(([0-9]+)\\)",line2))|>unlist()),by=.(line.eta,line2)]
 

@@ -1,4 +1,8 @@
 ##' @param data The data set to plot. Must include a EVID column - will pick EVID==0
+##' @param arm will calculate and colour by arm
+##' @param by calcs are done by this
+##' @param analyte calc done by analyte, and plots are split by it too
+##' @param ID A column to distinguish subjects for calculations
 
 diagsExposure <- function(data,by=NULL,arm=NULL,analyte=NULL,col.id="ID"){
 
