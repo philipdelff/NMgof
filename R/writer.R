@@ -11,11 +11,15 @@
 ##' @export
 
 ## add ,args.ggwrite and and args.flextable
-writer <- function(x,file,save,show,formats.ft,formats.gg,script=NULL,canvas="standard",...){
+writer <- function(x,file,save,show,formats.ft,formats.gg,script=NULL,canvas="standard",time=NULL,...){
 
     
     if("flextable" %in% class(x)) {
         ftwrite(x,file=file,script=script,formats=formats.ft,...)
+    } else if(is.data.frame(x)) {
+        ## NMwriteData(x,file=file,formats.write="rds",script=script,genText=FALSE)
+        NMstamp(x,script=script,model=time)
+        saveRDS(x,file=fnExtension(file,"rds"))
     } else {
         if(is.list(x) && !is.ggplot(x)){
             x <- x[!sapply(x,is.null)]
@@ -27,5 +31,4 @@ writer <- function(x,file,save,show,formats.ft,formats.gg,script=NULL,canvas="st
         res 
     }
     
-
 }

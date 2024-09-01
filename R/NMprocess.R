@@ -49,9 +49,9 @@
 ##' @import NMdata
 ##' @export
 
-NMgof <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NULL,fun.gof,update.only=TRUE,secs.rep,hours.run,formats.ft="png",formats.gg="pdf",script=NULL,time.stamp=NULL,canvas="standard",args.NMscanData=list(as.fun="data.table"),name.gofrun=NULL){
+NMprocess <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data=NULL,fun.gof,update.only=TRUE,secs.rep,hours.run,formats.ft="png",formats.gg="pdf",script=NULL,time.stamp=NULL,canvas="standard",args.NMscanData=list(as.fun="data.table"),name.gofrun=NULL){
 
-    
+### NMprocess should not include finding models. NMfindModels should be separated from NMprocess. 
     
     if(missing(fun.find.models)) fun.find.models <- NULL 
     if(missing(models)) models <- NULL 
