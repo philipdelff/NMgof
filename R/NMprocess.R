@@ -1,4 +1,4 @@
-##' search for models and update or overwrite goodness of fit plots
+##' search for models and post-process if needed
 ##'
 ##' @param dir.models Directory in which to look for models.
 ##' @param models Paths to specific Nonmem models to analyze. If
@@ -92,47 +92,13 @@ NMprocess <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data
 
     
     
-    fun.run <- function(nmod){
+    fun.run <- function(nmod,dt.mods){
         
         
         model <- dt.mods[nmod,model]
+        file.mod <- dt.mods[nmod,path.mod]
         ## cat(sprintf("\n----------- Model %s ---------------\n",model))
         
-        path.lst <- dt.mods[nmod,path.lst]
-
-### time.stamp=="model" has a special meaning.
-        if(!is.null(time.stamp)&&time.stamp=="model") time.stamp <- path.lst
-
-### read and prepare data start
-        this.file.data <- fnExtension(fnAppend(path.lst,"input"),".rds")
-        if(!file.exists(this.file.data)) this.file.data <- "extract"
-        
-        ## dt.run <- NMscanData(run,file.data=function(x)fnExtension(fnAppend(x,"input"),".rds"))
-### introduce args.NMscanData as an argument to NMgof.
-        all.args <- c(list(path.lst,file.data=this.file.data),args.NMscanData)
-        
-        dt.run <- try(do.call(NMscanData,all.args))
-        ## dt.run <- try(NMscanData(path.lst,file.data=this.file.data))
-        
-        if("try-error"%in%class(dt.run)) {
-            message("Reading of model results data failed. Skipping this model.")
-            return(NULL)
-        }
-
-        if(!is.null(fun.repair.data)) {
-            meta <- NMdata:::NMinfoDT(dt.run)
-            details <- meta$details
-
-            dt.run.try <- try(fun.repair.data(dt.run))
-            
-            if("try-error"%in%class(dt.run.try)) {
-                message("Data repair function failed. Not applied.")
-            } else {
-                dt.run <- dt.run.try
-            }
-            NMdata:::writeNMinfo(dt.run,meta=meta)
-        }
-### read and prepare data end
 
         dir.diag.nmod <- file.path(dir.diag,dt.mods[nmod,run])
         if(!dir.exists(dir.diag.nmod)) dir.create(dir.diag.nmod)
@@ -140,12 +106,6 @@ NMprocess <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data
         ## make sure fun.gof is a list
         for(nfun in seq_along(fun.gof)){
             
-            ## plots.run <- try(fun.gof[[nfun]]$fun(dt=dt.run,fun.gof[[nfun]]$args))
-            if(!is.list(fun.gof[[nfun]]) || is.null(fun.gof[[nfun]]$subset)) {
-                subset.run <- "TRUE"
-            } else {
-                subset.run <- fun.gof[[nfun]]$subset
-            }
 
             this.dir.nmod <- file.path(dir.diag.nmod)
             ## if subdir is given, add this in
@@ -153,18 +113,17 @@ NMprocess <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data
                 this.dir.nmod <- file.path(dir.diag.nmod,fun.gof[[nfun]][["subdir"]])
                 if(!dir.exists(this.dir.nmod)) dir.create(this.dir.nmod)
             }
-            
+
             element.dir.diag <- NULL
             if(is.list(fun.gof[[nfun]]) && !is.null(fun.gof[[nfun]]$arg.dir.diag)){
                 element.dir.diag <- setNames(list(dir.diag=this.dir.nmod),fun.gof[[nfun]]$arg.dir.diag)
             }
-
             
             plots.run <- try(
                 do.call(
                     fun.gof[[nfun]]$fun
                    ,
-                    c(fun.gof[[nfun]]$args,list(dt=dt.run[eval(parse(text=subset.run))]),element.dir.diag)
+                    c(list(file.mod),fun.gof[[nfun]]$args,element.dir.diag)
                 )
             )
             
@@ -211,11 +170,15 @@ NMprocess <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data
         )
         
         
-        dt.mods[,mtime:=file.info(path.lst)$mtime ][
+        dt.mods[
+           ,path.mod:=fnExtension(path.lst,"mod") ][
+           ,mtime:=file.info(path.lst)$mtime ][
            ,model:=sub("run","",basename(path.lst)) ][
            ,model:=sub("\\..+","",model) ][
            ,run:=fnExtension(basename(path.lst),"") ]
 
+        var.pass <- "path.mod"
+        
         dt.mods[
            ,path.info:=fun.file.rds(dir.diag,run) ][
            ,gofs.exist:=file.exists(path.info) ][
@@ -238,15 +201,17 @@ NMprocess <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data
             ##message("No models to process. Exiting.")
             ## return(invisible(NULL))
         } else {
+            
             setorder(dt.mods,-mtime)
-            print(dt.mods)
+### a simple overview
+            print(dt.mods[,.(path.lst,mtime,gofs.exist,time.gof)])
             Nmods <- dt.mods[,.N]
 
             for(nmod in 1:Nmods){
                 model <- dt.mods[nmod,model]
                 cat(sprintf("\n----------- model %s (%d/%d) ---------------\n",model,nmod,Nmods))
 
-                tmp <- fun.run(nmod)
+                tmp <- fun.run(nmod,dt.mods)
                 ## tmp <- fun.run(nmod)
             }
         }

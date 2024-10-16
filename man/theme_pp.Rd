@@ -21,7 +21,6 @@ A custom theme - aim is powerpoint
 }
 \seealso{
 Other Plotting: 
-\code{\link{NMplotBSVold}()},
 \code{\link{NMplotBSV}()},
 \code{\link{NMplotGOF}()},
 \code{\link{NMplotIndProfs}()},

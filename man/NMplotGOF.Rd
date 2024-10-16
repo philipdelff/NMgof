@@ -56,10 +56,9 @@ update of patchwork propagates to the repositories.
 }
 \seealso{
 Other Plotting: 
-\code{\link{NMplotBSVold}()},
 \code{\link{NMplotBSV}()},
 \code{\link{NMplotIndProfs}()},
-\code{\link{theme_pp_facet}()},
-\code{\link{theme_pp}()}
+\code{\link{theme_pp}()},
+\code{\link{theme_pp_facet}()}
 }
 \concept{Plotting}

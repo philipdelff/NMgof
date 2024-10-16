@@ -1,6 +1,6 @@
 Package: NMgof
 Title: Nonmem Goodness of Fit Plots Automated 
-Version: 0.0.0.9003
+Version: 0.0.0.9101
 Authors@R: 
     person(given = "Philip",
            family = "Delff",
@@ -11,4 +11,4 @@ License: use_mit_license()
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.3.1

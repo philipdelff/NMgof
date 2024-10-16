@@ -42,7 +42,7 @@ NMplotFit <- function(dt,models=NULL,type.mean="geometric",by.split=NULL,col.grp
     if(!is.null(names(cols.pred))){
         
         setnames(dt.means,"type.pred","type.pred.raw")
-        dt.means <- mergeCheck(dt.means,data.table(type.pred.raw=cols.pred,type.pred=names(cols.pred)),by="type.pred.raw")
+        dt.means <- mergeCheck(dt.means,data.table(type.pred.raw=cols.pred,type.pred=names(cols.pred)),by="type.pred.raw",quiet=TRUE)
     }
     dt.all <- rbind(dt,dt.means,fill=T)
 

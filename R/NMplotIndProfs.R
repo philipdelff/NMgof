@@ -171,6 +171,10 @@ NMplotIndProfs <- function(data, run, x="TIME", dv="DV", pred="PRED", ipred=c("I
         data$..grp <- ""
         grp <- "..grp"
     }
+    if(length(grp)>1){
+        data[,..grp:= do.call(paste,c(.SD,sep=" - ")),.SDcols=grp]
+        grp <- "..grp"
+    }
     
 ### do all 
 
@@ -495,15 +499,6 @@ NMplotIndProfs <- function(data, run, x="TIME", dv="DV", pred="PRED", ipred=c("I
         }
         ##            p <- p + scale_colour_manual(values = c("red", "black"))
         p <- p + theme(legend.position = "bottom",legend.title=element_blank(),legend.box="horizontal")
-        ##        outlist.grp <- c(outlist.grp, list(p))
-        ## not done yet - replacce unique(12) by Noofsheets
-
-        ## if(!scales%in%c("free_x","free")){
-        ##     p <- p + coord_cartesian(xlim = xrange)
-        ## }
-        ## if(!scales%in%c("free_y","free")){
-        ##     p <- p + coord_cartesian(ylim = yrange)
-        ## }
 
         
         xlim <- NULL
@@ -517,10 +512,6 @@ NMplotIndProfs <- function(data, run, x="TIME", dv="DV", pred="PRED", ipred=c("I
                      )
         }
 
-        ##        n.plots <- n.plots+1 cat(paste0(paste(n.plots,": ",
-        ##   unique(tmp$sheetgrp), "/", unique(tmp$Nsheetsgrp), sep = ""),
-        ##   "created.\n" ))
-        ##        if(unique(tmp2$sheet)==30) browser()
         if(!quiet) message(paste0(unique(tmp2$sheet),": ", ptitle, " created." ))
         ##            cat("s.dv.dos is",s.dv.dos,"\n")
 

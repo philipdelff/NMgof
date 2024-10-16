@@ -13,6 +13,7 @@ writer(
   formats.gg,
   script = NULL,
   canvas = "standard",
+  time = NULL,
   ...
 )
 }

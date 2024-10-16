@@ -21,6 +21,8 @@ NMplotBSV(
   structure = "flat",
   use.phi,
   auto.map,
+  keep.zeros = FALSE,
+  keep.zeros.pairs = FALSE,
   ...
 )
 }
@@ -63,8 +65,6 @@ translate the file names. The inputs given to the function
 argument are "iov_pairs.png" and "iov_covs_n.png".}
 
 \item{script}{If saving the plots, a stamp to add. See ggstamp.}
-
-\item{debug}{Start by running browser()?}
 }
 \description{
 Generate distribution plots of between-occasion variability terms
@@ -72,10 +72,9 @@ from Nonmem
 }
 \seealso{
 Other Plotting: 
-\code{\link{NMplotBSVold}()},
 \code{\link{NMplotGOF}()},
 \code{\link{NMplotIndProfs}()},
-\code{\link{theme_pp_facet}()},
-\code{\link{theme_pp}()}
+\code{\link{theme_pp}()},
+\code{\link{theme_pp_facet}()}
 }
 \concept{Plotting}
