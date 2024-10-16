@@ -194,7 +194,7 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
     ## make a wide version for ggpairs
     ## names.etas.var <- setdiff(colnames(etas.w),"ID")
 
-    names.etas.var <- etas.l[,unique(label)]
+    names.etas.var <- as.character(etas.l[,unique(label)])
     if(!length(names.etas.var)){        
         message("No BSV random effects found in parameter table.")
         return(invisible(NULL))
@@ -209,7 +209,7 @@ NMplotBSV <- function(data,regex.eta,names.eta=NULL,parameters=NULL,col.id="ID",
     if(!keep.zeros.pairs){
         etas.l.pairs <- etas.l.pairs[value!=0]
     }
-    names.etas.pairs <- etas.l.pairs[,unique(label)]
+    names.etas.pairs <- as.character(etas.l.pairs[,unique(label)])
     etas.w <- dcast(etas.l.pairs,ID~label,value.var="value")
     iiv.pairs <- ggpairs(etas.w,columns=names.etas.pairs,lower=list(continuous=points.and.smooth),title=title)
 
