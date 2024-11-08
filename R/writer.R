@@ -12,13 +12,17 @@
 ## this should be exported from tracee, not from NMgof/NMauto
 
 ## add ,args.ggwrite and and args.flextable
-writer <- function(x,file,save,show,formats.ft,formats.gg,script=NULL,canvas="standard",time=NULL,...){
+writer <- function(x,file,save,show,formats.ft,formats.gg,script=NULL,canvas="standard",model=NULL,...){
+
+    if(is.list(model)) {
+        model <- model$label
+    }
     
     if("flextable" %in% class(x)) {
-        ftwrite(x,file=file,script=script,formats=formats.ft,...)
+        ftwrite(x,file=file,script=script,formats=formats.ft,time=model,bg="#ffffff",...)
     } else if(is.data.frame(x)) {
         ## requires NMdata 0.1.7
-        NMwriteData(x,file=file,formats.write="rds",script=script,genText=FALSE)
+        NMwriteData(x,file=file,formats.write="rds",script=script,genText=FALSE,args.stamp=list(model=model))
         ## NMstamp(x,script=script,model=time)
         ## saveRDS(x,file=fnExtension(file,"rds"))
     } else {
@@ -27,6 +31,7 @@ writer <- function(x,file,save,show,formats.ft,formats.gg,script=NULL,canvas="st
         }
         ## message("Calling ggwrite()")
         res <- try(ggwrite(x,file=file,script=script,save=save,show=show,onefile=TRUE,canvas=canvas,
+                           time=model,
                            useNames=TRUE,
                            formats=formats.gg))
         ## if("try-error"%in%class(res)) browser()
