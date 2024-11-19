@@ -139,7 +139,7 @@ NMprocess <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data
                     
                     res <- try(
                         writer(plots.run[[x]],file=file.out,save=T,show=F,formats.ft=formats.ft,
-                               formats.gg=formats.gg,script=script,time=time.stamp,canvas=canvas)
+                               formats.gg=formats.gg,script=script,model=model,canvas=canvas)
                     )
                     if("try-error"%in%class(res)) try(dev.off())
                     res
