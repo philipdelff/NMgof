@@ -12,6 +12,8 @@
 
 
 NMplotDiags <- function(data,by.split=NULL,facet=NULL,colour=NULL){
+
+    setDT(data)
     
     if("EVID"%in%colnames(data)){
         data <- data[EVID==0]
@@ -23,15 +25,17 @@ NMplotDiags <- function(data,by.split=NULL,facet=NULL,colour=NULL){
         if(!by.split%in%colnames(data)) stop("If used, by.split must refer to a column in ouput or input data.")
         data.split <- split(data,by=by.split,drop=TRUE) 
     }
-
+    
     
     names.data.split <- names(data.split)
     plots.diag <- lapply(names.data.split,function(name.data){
+        
+
         dt1 <- data.split[[name.data]]
 
         ## xymin <- min(dt1[,.(DV,PRED,IPRED)])
         xymin <- 0
-        xymax <- 1.1*max(dt1[,.(DV,PRED,IPRED)])
+        xymax <- 1.1*max(dt1[,c(DV,PRED,IPRED)])
         
         res <- list()
         res$pred.dv <- ggplot(dt1,aes_string("PRED","DV",colour=colour))+

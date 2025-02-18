@@ -67,6 +67,16 @@ NMprocess <- function(dir.models,dir.diag,models,fun.find.models,fun.repair.data
     if(length(fun.gof)==2 && all(cc(fun,args)%in%names(fun.gof))){
         fun.gof <- list(fun.gof)
     }
+    if(length(fun.gof)==1 && all(cc(fun)%in%names(fun.gof))){
+        fun.gof <- list(fun.gof)
+    }
+    fun.gof <- lapply(fun.gof,function(x){
+        if(!"args" %in% names(x)){
+            x$args <- list()
+        }
+        x
+    })
+    
     
 
     if(missing(secs.rep)) secs.rep <- NULL
